@@ -1,0 +1,27 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+coverage
+playwright-report
+test-results
+*.tsbuildinfo
+
+# Environment
+.env
+.env.*
+
+# Local-only cross-repo configuration
+.local/
+.codex/local-context.md
+/hugo-ui
+
+# OS files
+.DS_Store
+
+# Logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*

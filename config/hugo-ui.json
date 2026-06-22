@@ -1,0 +1,5 @@
+{
+  "mode": "npm",
+  "expectedVersion": "0.1.0",
+  "localPackagePath": "hugo-ui/packages/shadcn-vue"
+}

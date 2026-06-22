@@ -1,0 +1,48 @@
+import type { ActivityLogEntry } from '@/shared/types';
+
+export const mockActivityLogEntries: ActivityLogEntry[] = [
+  {
+    id: 'act-001',
+    productId: 'prod-learning-suite',
+    entitlementId: 'ent-learning-annual-001',
+    action: 'entitlement.created',
+    actor: 'Riley Admin',
+    target: 'ENT-LRN-2026-001',
+    quantityDelta: 75,
+    status: 'success',
+    occurredAt: '2026-01-15T08:00:00Z',
+  },
+  {
+    id: 'act-002',
+    productId: 'prod-learning-suite',
+    entitlementId: 'ent-learning-annual-001',
+    action: 'user.allocated',
+    actor: 'Riley Admin',
+    target: 'Amelia Hart',
+    quantityDelta: -1,
+    status: 'success',
+    occurredAt: '2026-02-03T10:20:00Z',
+  },
+  {
+    id: 'act-003',
+    productId: 'prod-learning-suite',
+    entitlementId: 'ent-learning-trial-002',
+    action: 'user.allocated',
+    actor: 'System',
+    target: 'Maya Singh',
+    quantityDelta: -1,
+    status: 'pending',
+    occurredAt: '2026-05-09T09:15:00Z',
+  },
+  {
+    id: 'act-004',
+    productId: 'prod-insights-hub',
+    entitlementId: 'ent-insights-annual-001',
+    action: 'quantity.updated',
+    actor: 'Jordan Admin',
+    target: 'ENT-INS-2026-001',
+    quantityDelta: 10,
+    status: 'success',
+    occurredAt: '2026-04-18T12:30:00Z',
+  },
+];

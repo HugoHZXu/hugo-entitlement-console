@@ -1,0 +1,55 @@
+{
+  "name": "entitlement-console-portfolio",
+  "private": true,
+  "version": "0.0.0",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@10.34.1",
+  "engines": {
+    "node": ">=22.12.0",
+    "pnpm": ">=10.34.1 <11"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc -b",
+    "lint": "eslint .",
+    "format": "prettier \"**/*.{ts,vue,js,mjs,json,md}\" --write",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "setup:local-hugo-ui": "node scripts/setup-local-hugo-ui.mjs",
+    "verify:hugo-ui": "node scripts/verify-hugo-ui-mode.mjs",
+    "verify": "pnpm run verify:hugo-ui && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build"
+  },
+  "dependencies": {
+    "@hugo-ui/shadcn-vue": "0.1.0",
+    "@tanstack/vue-query": "^5.90.12",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.25",
+    "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.57.0",
+    "@tsconfig/node22": "^22.0.3",
+    "@types/node": "^22.19.19",
+    "@vitejs/plugin-vue": "^6.0.3",
+    "@vue/eslint-config-typescript": "^14.6.0",
+    "@vue/test-utils": "^2.4.6",
+    "@vue/tsconfig": "^0.8.1",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.6.2",
+    "globals": "^17.6.0",
+    "jsdom": "^27.4.0",
+    "prettier": "^3.8.3",
+    "tailwindcss": "^4.3.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.60.0",
+    "vite": "^8.0.14",
+    "vitest": "^4.1.9",
+    "vue-eslint-parser": "^10.4.1",
+    "vue-tsc": "^3.2.0"
+  }
+}
