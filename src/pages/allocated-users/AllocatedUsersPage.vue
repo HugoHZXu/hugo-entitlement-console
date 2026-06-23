@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { Button, ContentTemplate, DataGrid } from '@hugo-ui/shadcn-vue';
+import { Button, ContentTemplate, DataGrid, Input } from '@hugo-ui/shadcn-vue';
+import { Search } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
 import { useUserAccessColumns } from '@/features/allocated-users/allocated-user-display';
 import {
+  filterUserAccessRows,
   getSeatChangeDescriptor,
   getAllocatedUserAccessRowIds,
   getOverCapacityEntitlement,
@@ -40,11 +42,16 @@ const { data: entitlements } = useProductEntitlementsQuery(productId);
 const { data: entitlementSummary } = useProductEntitlementSummaryQuery(productId);
 const updateAllocations = useUpdateProductUserAllocationsMutation(productId);
 const columns = useUserAccessColumns();
+const search = ref('');
 const selectedRowIds = ref<string[]>([]);
 const baselineSelectedRowIds = ref<string[]>([]);
 const hasLoadedInitialSelection = ref(false);
 
 const rows = computed(() => userAccessRows.value ?? []);
+const filteredRows = computed(() => filterUserAccessRows(rows.value, search.value));
+const emptyMessage = computed(() =>
+  search.value.trim() ? t('pages.allocatedUsers.searchEmpty') : t('pages.allocatedUsers.empty')
+);
 const hasDraftChanges = computed(
   () => !haveSameUserAccessSelection(selectedRowIds.value, baselineSelectedRowIds.value)
 );
@@ -189,16 +196,31 @@ async function submitChanges() {
         {{ submitError }}
       </p>
 
+      <div class="allocated-users-toolbar">
+        <div class="allocated-users-toolbar__search">
+          <Input
+            v-model="search"
+            :aria-label="t('pages.allocatedUsers.searchAriaLabel')"
+            :placeholder="t('pages.allocatedUsers.searchPlaceholder')"
+            type="search"
+          >
+            <template #start-icon>
+              <Search :size="16" aria-hidden="true" />
+            </template>
+          </Input>
+        </div>
+      </div>
+
       <DataGrid
         :aria-label="t('pages.allocatedUsers.ariaLabel')"
         :columns="columns"
-        :empty="t('pages.allocatedUsers.empty')"
+        :empty="emptyMessage"
         :get-row-id="getUserAccessRowId"
         :height="620"
         :loading="isUserAccessLoading || isUserAccessFetching"
         :overscan="10"
         :row-height="56"
-        :rows="rows"
+        :rows="filteredRows"
         :selected-row-ids="selectedRowIds"
         :show-header-checkbox="false"
         show-checkbox-column
@@ -244,5 +266,17 @@ p {
 
 .allocation-message--error {
   color: #b91c1c;
+}
+
+.allocated-users-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.allocated-users-toolbar__search {
+  width: min(380px, 100%);
 }
 </style>

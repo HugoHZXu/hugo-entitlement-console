@@ -5,11 +5,6 @@ import { useI18n } from 'vue-i18n';
 import { formatDateTime, normalizeAppLocale } from '@/app/i18n';
 import type { ActivityLogEntry, ActivityLogStatus, LocalizedMessage } from '@/shared/types';
 
-export const activityLogDefaultSort = {
-  columnId: 'eventTime',
-  direction: 'desc',
-} as const;
-
 export function formatActivityStatus(status: ActivityLogStatus): string {
   const labels: Record<ActivityLogStatus, string> = {
     failed: 'Failed',

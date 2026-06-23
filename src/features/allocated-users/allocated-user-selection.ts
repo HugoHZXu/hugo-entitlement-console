@@ -29,6 +29,26 @@ export function getAllocatedUserAccessRowIds(rows: UserAccessRow[]): string[] {
   return normalizeUserAccessSelection(rows.filter((row) => row.isAllocated).map((row) => row.id));
 }
 
+export function filterUserAccessRows(rows: UserAccessRow[], searchString: string): UserAccessRow[] {
+  const search = searchString.trim().toLowerCase();
+
+  if (!search) {
+    return rows;
+  }
+
+  return rows.filter((row) =>
+    [
+      row.name,
+      row.email,
+      row.department,
+      row.status,
+      row.entitlementCode,
+      row.allocatedAt ?? '',
+      String(row.seatQuantity),
+    ].some((value) => value.toLowerCase().includes(search))
+  );
+}
+
 export function reconcileUserAccessSelection(
   nextAllocatedRowIds: string[],
   state: UserAccessSelectionState

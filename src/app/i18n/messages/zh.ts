@@ -36,6 +36,9 @@ const zhMessages = {
       ariaLabel: '已分配用户',
       empty: '此产品暂无可用用户。',
       overCapacity: '所选用户超出了 {entitlementCode} 的可用席位。',
+      searchAriaLabel: '搜索已分配用户',
+      searchEmpty: '没有符合当前搜索的用户。',
+      searchPlaceholder: '搜索已分配用户',
       seatDelta: {
         assigned: '将分配 {count} 个席位',
         none: '没有待处理更改',

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Entitlement, UserAccessRow } from '@/shared/types';
 import {
+  filterUserAccessRows,
   getAllocatedUserAccessRowIds,
   getOverCapacityEntitlement,
   getSelectedSeatQuantity,
@@ -73,6 +74,13 @@ describe('allocated user selection helpers', () => {
   it('reads initial allocated rows as the checked selection', () => {
     expect(getAllocatedUserAccessRowIds(rows)).toEqual(['usr-amelia-hart']);
     expect(getSelectedSeatQuantity(['usr-amelia-hart'], rows)).toBe(1);
+  });
+
+  it('filters visible rows without changing selection inputs', () => {
+    expect(filterUserAccessRows(rows, '')).toEqual(rows);
+    expect(filterUserAccessRows(rows, 'dylan')).toEqual([rows[1]]);
+    expect(filterUserAccessRows(rows, 'enablement')).toEqual([rows[0]]);
+    expect(filterUserAccessRows(rows, 'missing')).toEqual([]);
   });
 
   it('formats draft seat changes as assignment intent', () => {

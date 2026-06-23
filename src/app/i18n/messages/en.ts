@@ -36,6 +36,9 @@ const enMessages = {
       ariaLabel: 'Allocated users',
       empty: 'No users are available for this product.',
       overCapacity: 'Selected users exceed available seats for {entitlementCode}.',
+      searchAriaLabel: 'Search allocated users',
+      searchEmpty: 'No users match the current search.',
+      searchPlaceholder: 'Search allocated users',
       seatDelta: {
         assigned: '{count} {seatLabel} will be assigned',
         none: 'No pending changes',
@@ -58,7 +61,8 @@ const enMessages = {
       activityEmpty: 'No activity records for this product.',
       activityTitle: 'Activity Log',
       fallbackTitle: 'Product detail',
-      fallbackTitleInfo: 'Product information, entitlement allocation summary, and product-local activity.',
+      fallbackTitleInfo:
+        'Product information, entitlement allocation summary, and product-local activity.',
       fields: {
         allocationModel: 'Allocation model',
         dimensionApiName: 'Dimension API name',
@@ -82,7 +86,8 @@ const enMessages = {
     products: {
       loading: 'Loading products...',
       title: 'Products',
-      titleInfo: 'Browse products that can be granted through licenses and allocated as organization seats.',
+      titleInfo:
+        'Browse products that can be granted through licenses and allocated as organization seats.',
     },
   },
   product: {

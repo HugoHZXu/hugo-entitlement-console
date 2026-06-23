@@ -1,35 +1,23 @@
 <script setup lang="ts">
 import { ContentTemplate, DataGrid, Input, type DataGridSort } from '@hugo-ui/shadcn-vue';
 import { Search } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { storeToRefs } from 'pinia';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import {
-  activityLogDefaultSort,
-  useActivityLogColumns,
-} from '@/features/activity-log/activity-display';
+import { useActivityLogColumns } from '@/features/activity-log/activity-display';
 import { useActivityLogsQuery } from '@/features/activity-log/composables/useActivityLogQuery';
-import type { ActivityLogEntry, ActivityLogListInput, ActivityLogSortField } from '@/shared/types';
+import { useActivityLogFilterStore } from '@/features/activity-log/stores/activity-log-filter-store';
+import type { ActivityLogEntry } from '@/shared/types';
 
-const search = ref('');
-const sort = ref<DataGridSort>(activityLogDefaultSort);
+const activityLogFilterStore = useActivityLogFilterStore();
+const { queryInput, sort } = storeToRefs(activityLogFilterStore);
 const columns = useActivityLogColumns();
 const { t } = useI18n();
 
-const queryInput = computed<ActivityLogListInput>(() => {
-  const input: ActivityLogListInput = {};
-  const searchString = search.value.trim();
-
-  if (searchString) {
-    input.searchString = searchString;
-  }
-
-  if (sort.value) {
-    input.sortField = sort.value.columnId as ActivityLogSortField;
-    input.sortDirection = sort.value.direction;
-  }
-
-  return input;
+const search = computed({
+  get: () => activityLogFilterStore.searchString,
+  set: (nextSearchString: string) => activityLogFilterStore.setSearchString(nextSearchString),
 });
 
 const { data: activityLogs, isFetching, isLoading } = useActivityLogsQuery(queryInput);
@@ -42,7 +30,7 @@ function getActivityLogRowId(row: ActivityLogEntry) {
 }
 
 function handleSortChange(nextSort: DataGridSort) {
-  sort.value = nextSort;
+  activityLogFilterStore.setSort(nextSort);
 }
 </script>
 
