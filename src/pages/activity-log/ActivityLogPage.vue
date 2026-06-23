@@ -5,6 +5,12 @@ import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+import {
+  activityLogPageClass,
+  activityLogToolbarClass,
+  activityLogToolbarCountClass,
+  activityLogToolbarSearchClass,
+} from '@/features/activity-log/activity-log.styles';
 import { useActivityLogColumns } from '@/features/activity-log/activity-display';
 import { useActivityLogsQuery } from '@/features/activity-log/composables/useActivityLogQuery';
 import { useActivityLogFilterStore } from '@/features/activity-log/stores/activity-log-filter-store';
@@ -40,9 +46,9 @@ function handleSortChange(nextSort: DataGridSort) {
     :page-title="t('pages.activityLog.title')"
     :title-info="t('pages.activityLog.titleInfo')"
   >
-    <div class="activity-log-page">
-      <div class="activity-log-toolbar">
-        <div class="activity-log-toolbar__search">
+    <div :class="activityLogPageClass">
+      <div :class="activityLogToolbarClass">
+        <div :class="activityLogToolbarSearchClass">
           <Input
             v-model="search"
             :aria-label="t('pages.activityLog.searchAriaLabel')"
@@ -55,7 +61,7 @@ function handleSortChange(nextSort: DataGridSort) {
           </Input>
         </div>
 
-        <p class="activity-log-toolbar__count">
+        <p :class="activityLogToolbarCountClass">
           {{ t('pages.activityLog.recordCount', { count: totalElements }) }}
         </p>
       </div>
@@ -76,29 +82,3 @@ function handleSortChange(nextSort: DataGridSort) {
     </div>
   </ContentTemplate>
 </template>
-
-<style scoped>
-.activity-log-page {
-  display: grid;
-  gap: 16px;
-}
-
-.activity-log-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.activity-log-toolbar__search {
-  width: min(380px, 100%);
-}
-
-.activity-log-toolbar__count {
-  margin: 0;
-  color: #4b5563;
-  font-size: 14px;
-  font-weight: 600;
-}
-</style>

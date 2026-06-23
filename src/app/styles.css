@@ -2,6 +2,11 @@
 @import '@fontsource/noto-sans/600.css';
 @import '@hugo-ui/shadcn-vue/styles.css';
 
+@source '../features';
+@source '../layouts';
+@source '../pages';
+@source '../shared';
+
 * {
   box-sizing: border-box;
 }

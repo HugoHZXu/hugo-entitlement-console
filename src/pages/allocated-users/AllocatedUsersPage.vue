@@ -5,6 +5,15 @@ import { Search } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
+import {
+  allocatedUsersPageClass,
+  allocatedUsersToolbarClass,
+  allocatedUsersToolbarSearchClass,
+  allocationMessageClass,
+  allocationSummaryClass,
+  allocationSummaryDeltaClass,
+  allocationSummaryMetricClass,
+} from '@/features/allocated-users/allocated-users.styles';
 import { useUserAccessColumns } from '@/features/allocated-users/allocated-user-display';
 import {
   filterUserAccessRows,
@@ -173,31 +182,31 @@ async function submitChanges() {
       </Button>
     </template>
 
-    <div class="allocated-users-page">
-      <div class="allocation-summary" aria-live="polite">
-        <p>
-          <strong>{{ selectedSeatQuantity }}</strong>
+    <div :class="allocatedUsersPageClass">
+      <div :class="allocationSummaryClass" aria-live="polite">
+        <p class="m-0">
+          <strong :class="allocationSummaryMetricClass">{{ selectedSeatQuantity }}</strong>
           {{ t('pages.allocatedUsers.summary.used') }} &middot;
-          <strong>{{ availableAfterDraft }}</strong>
+          <strong :class="allocationSummaryMetricClass">{{ availableAfterDraft }}</strong>
           {{ t('pages.allocatedUsers.summary.available') }} &middot;
           <span>{{ purchasedQuantity }} {{ t('pages.allocatedUsers.summary.totalSeats') }}</span>
         </p>
-        <p class="allocation-summary__delta">{{ seatDeltaLabel }}</p>
+        <p :class="allocationSummaryDeltaClass">{{ seatDeltaLabel }}</p>
       </div>
 
-      <p v-if="isOverSeatLimit" class="allocation-message allocation-message--error">
+      <p v-if="isOverSeatLimit" :class="allocationMessageClass({ tone: 'error' })">
         {{
           t('pages.allocatedUsers.overCapacity', {
             entitlementCode: overCapacityEntitlement?.entitlementCode,
           })
         }}
       </p>
-      <p v-else-if="submitError" class="allocation-message allocation-message--error">
+      <p v-else-if="submitError" :class="allocationMessageClass({ tone: 'error' })">
         {{ submitError }}
       </p>
 
-      <div class="allocated-users-toolbar">
-        <div class="allocated-users-toolbar__search">
+      <div :class="allocatedUsersToolbarClass">
+        <div :class="allocatedUsersToolbarSearchClass">
           <Input
             v-model="search"
             :aria-label="t('pages.allocatedUsers.searchAriaLabel')"
@@ -229,54 +238,3 @@ async function submitChanges() {
     </div>
   </ContentTemplate>
 </template>
-
-<style scoped>
-p {
-  margin: 0;
-}
-
-.allocated-users-page {
-  display: grid;
-  gap: 14px;
-}
-
-.allocation-summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  color: #4b5563;
-  font-size: 14px;
-}
-
-.allocation-summary strong {
-  color: var(--hugo-ui-shadcn-text-primary);
-  font-weight: 700;
-}
-
-.allocation-summary__delta {
-  font-weight: 700;
-}
-
-.allocation-message {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.allocation-message--error {
-  color: #b91c1c;
-}
-
-.allocated-users-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.allocated-users-toolbar__search {
-  width: min(380px, 100%);
-}
-</style>
