@@ -1,3 +1,5 @@
+import type { ActivityLogListInput } from '@/shared/types';
+
 export const queryKeys = {
   products: ['products'] as const,
   product: (productId: string) => ['products', productId] as const,
@@ -6,5 +8,6 @@ export const queryKeys = {
   productEntitlementSummary: (productId: string) =>
     ['products', productId, 'entitlement-summary'] as const,
   allocatedUsers: (productId: string) => ['products', productId, 'allocated-users'] as const,
+  activityLogs: (input: ActivityLogListInput) => ['activity-log', input] as const,
   activityLog: (productId: string) => ['products', productId, 'activity-log'] as const,
 };

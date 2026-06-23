@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { Badge, Button, Card, ContentTemplate } from '@hugo-ui/shadcn-vue';
+import { Badge, Button, Card, ContentTemplate, DataGrid } from '@hugo-ui/shadcn-vue';
 import { computed } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 
+import { useProductActivityLogColumns } from '@/features/activity-log/activity-display';
 import { useActivityLogQuery } from '@/features/activity-log/composables/useActivityLogQuery';
 import { useProductEntitlementSummaryQuery } from '@/features/entitlements/composables/useEntitlementsQuery';
 import { getProductIcon } from '@/features/products/product-icons';
 import { formatProductStatus, getProductStatusTone } from '@/features/products/product-status';
 import { useProductQuery } from '@/features/products/composables/useProductsQuery';
+import type { ActivityLogEntry } from '@/shared/types';
 
 const props = defineProps<{
   productId: string;
@@ -15,12 +17,25 @@ const props = defineProps<{
 
 const router = useRouter();
 const { data: product } = useProductQuery(computed(() => props.productId));
-const { data: entitlementSummary } = useProductEntitlementSummaryQuery(computed(() => props.productId));
-const { data: activityLog } = useActivityLogQuery(computed(() => props.productId));
-const productIcon = computed(() => (product.value ? getProductIcon(product.value.icon) : undefined));
+const { data: entitlementSummary } = useProductEntitlementSummaryQuery(
+  computed(() => props.productId)
+);
+const {
+  data: activityLog,
+  isFetching: isActivityLogFetching,
+  isLoading: isActivityLogLoading,
+} = useActivityLogQuery(computed(() => props.productId));
+const productIcon = computed(() =>
+  product.value ? getProductIcon(product.value.icon) : undefined
+);
+const activityLogColumns = useProductActivityLogColumns();
 
 function goBackToProducts() {
   void router.push('/products');
+}
+
+function getActivityLogRowId(row: ActivityLogEntry) {
+  return row.id;
 }
 </script>
 
@@ -29,7 +44,8 @@ function goBackToProducts() {
     type="full"
     :page-title="product?.name ?? 'Product detail'"
     :title-info="
-      product?.description ?? 'Product information, entitlement allocation summary, and product-local activity.'
+      product?.description ??
+      'Product information, entitlement allocation summary, and product-local activity.'
     "
     @back="goBackToProducts"
   >
@@ -124,7 +140,17 @@ function goBackToProducts() {
       </Card>
 
       <ContentTemplate id="activity-log" class="panel--wide" type="table" page-title="Activity Log">
-        <p class="detail-muted">{{ activityLog?.length ?? 0 }} recent activity entries for this product.</p>
+        <DataGrid
+          aria-label="Product activity log"
+          :columns="activityLogColumns"
+          empty="No activity records for this product."
+          :get-row-id="getActivityLogRowId"
+          :height="360"
+          :loading="isActivityLogLoading || isActivityLogFetching"
+          :overscan="8"
+          :row-height="56"
+          :rows="activityLog ?? []"
+        />
       </ContentTemplate>
     </div>
   </ContentTemplate>
@@ -140,11 +166,6 @@ function goBackToProducts() {
 
 .panel--wide {
   grid-column: 1 / -1;
-}
-
-.detail-muted {
-  margin: 0;
-  color: #4b5563;
 }
 
 .product-info {

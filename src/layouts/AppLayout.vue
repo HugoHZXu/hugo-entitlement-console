@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PageTemplate, type PageTemplateNavItem } from '@hugo-ui/shadcn-vue';
+import { PageTemplate, type PageTemplateNavItem, type PageTemplateNavProps } from '@hugo-ui/shadcn-vue';
 import { Activity, Package, SquareStack } from 'lucide-vue-next';
 import { computed, h } from 'vue';
 import { RouterView, useRoute, useRouter } from 'vue-router';
@@ -35,6 +35,12 @@ const selectedNavItem = computed(() => {
   return 'products';
 });
 
+const navProps = computed<PageTemplateNavProps>(() => ({
+  navItems,
+  defaultSelected: selectedNavItem.value,
+  defaultExpanded: ['products'],
+}));
+
 function handleSelectionChange(selection: string) {
   const selectedItem = navItems
     .flatMap((item) => [item, ...(item.children ?? [])])
@@ -50,11 +56,7 @@ function handleSelectionChange(selection: string) {
   <PageTemplate
     :app-icon="h(SquareStack)"
     app-title="Entitlement Console"
-    :nav-props="{
-      navItems,
-      defaultSelected: selectedNavItem,
-      defaultExpanded: ['products'],
-    }"
+    :nav-props="navProps"
     @selection-change="handleSelectionChange"
   >
     <template #titleSlot>
