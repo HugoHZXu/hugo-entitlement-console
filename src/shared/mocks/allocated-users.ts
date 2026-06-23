@@ -3,8 +3,8 @@ import type { AllocatedUser } from '@/shared/types';
 export const mockAllocatedUsers: AllocatedUser[] = [
   {
     id: 'usr-amelia-hart',
-    productId: 'prod-learning-suite',
-    entitlementId: 'ent-learning-annual-001',
+    productId: 'prod-insight-studio',
+    entitlementId: 'ent-insight-studio-2026-001',
     name: 'Amelia Hart',
     email: 'amelia.hart@example.com',
     department: 'Enablement',
@@ -13,8 +13,8 @@ export const mockAllocatedUsers: AllocatedUser[] = [
   },
   {
     id: 'usr-noah-kim',
-    productId: 'prod-learning-suite',
-    entitlementId: 'ent-learning-annual-001',
+    productId: 'prod-insight-studio',
+    entitlementId: 'ent-insight-studio-2026-001',
     name: 'Noah Kim',
     email: 'noah.kim@example.com',
     department: 'Operations',
@@ -23,8 +23,8 @@ export const mockAllocatedUsers: AllocatedUser[] = [
   },
   {
     id: 'usr-maya-singh',
-    productId: 'prod-learning-suite',
-    entitlementId: 'ent-learning-trial-002',
+    productId: 'prod-insight-studio',
+    entitlementId: 'ent-insight-studio-trial-002',
     name: 'Maya Singh',
     email: 'maya.singh@example.com',
     department: 'Training',
@@ -33,8 +33,8 @@ export const mockAllocatedUsers: AllocatedUser[] = [
   },
   {
     id: 'usr-ethan-brooks',
-    productId: 'prod-insights-hub',
-    entitlementId: 'ent-insights-annual-001',
+    productId: 'prod-workflow-hub',
+    entitlementId: 'ent-workflow-hub-2026-001',
     name: 'Ethan Brooks',
     email: 'ethan.brooks@example.com',
     department: 'Analytics',

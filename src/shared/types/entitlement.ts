@@ -10,5 +10,5 @@ export interface Entitlement {
   status: EntitlementStatus;
   startDate: string;
   endDate: string;
-  source: 'marketplace' | 'contract' | 'trial';
+  source: 'contract' | 'trial' | 'scheduled';
 }

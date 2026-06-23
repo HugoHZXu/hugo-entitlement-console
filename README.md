@@ -2,7 +2,7 @@
 
 Vue 3 portfolio app for entitlement management.
 
-This repository contains a desensitized standalone admin console for Products, Entitlements, Allocated Users, and product-local Activity Log surfaces. It uses synthetic mock data only and does not connect to a real backend.
+This repository contains a desensitized standalone admin console for product entitlement management. Products are the primary navigation surface; allocated users and product-local Activity Log views live under the product workflow. It uses synthetic mock data only and does not connect to a real backend.
 
 ## Development
 

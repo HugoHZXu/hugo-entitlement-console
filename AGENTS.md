@@ -15,7 +15,7 @@
 - If `.codex/local-context.md` exists, read it for local-only cross-repo context. Do not commit that file.
 - Keep Hugo UI changes in the external `hugo-ui` repository unless the user explicitly asks to work across repositories.
 - Do not add private company code, real customer data, real endpoints, access tokens, screenshots, production logs, or internal business rules.
-- Use only synthetic B2B entitlement examples such as Product, Entitlement, Usage Dimension, Allocated User, Available Quantity, Admin, Status, and Activity Log.
+- Use only synthetic B2B entitlement examples such as Product, Usage Dimension, Allocated User, Available Quantity, Admin, Status, and Activity Log. Entitlement records may exist as product-detail data, but they are not an independent page in this app.
 
 ## Portfolio-Specific Guardrails
 
@@ -30,6 +30,7 @@
 - Local source linking uses the ignored `hugo-ui/` symlink plus `.local/hugo-ui.json`; do not commit the symlink or `.local/hugo-ui.json`.
 - Keep docs clear that Hugo UI is external. Do not list Hugo UI packages as packages owned by this repository.
 - Do not add component-library tests, stories, package exports, changesets, or publishing scripts to this repository.
+- Do not override external component-library styles by default. Judge this by the final rendered/computed result, not only by whether a class was passed to the component. This includes global resets, cascade-layer ordering, inherited properties, parent selectors, and descendant selectors that change the component's rendered DOM or slot content. Use the library's public props, slots, variants, or wrapper elements for layout spacing unless the user explicitly asks for a component-level style override.
 - If a task requires a reusable component API change, call out that the change belongs in the external design-system repository before editing.
 
 ## Current Architecture Boundaries
@@ -48,7 +49,7 @@
 
 - Use `$portfolio-desensitization-review` when adding mock data, business copy, docs, README content, Activity Log examples, or code adapted from prior experience.
 - Use `$local-hugo-ui-link` when setting up or repairing local symlink-based linking to an external `hugo-ui` clone without npm publishing.
-- Use `$entitlement-console-feature-slice` before implementing Products, Entitlements, Allocated Users, Product Detail, or future entitlement console slices.
+- Use `$entitlement-console-feature-slice` before implementing Products, Allocated Users, Product Detail, Activity Log, or future entitlement console slices.
 - Use `$activity-log-normalization` before implementing Activity Log mock contracts, normalization, or audit-event view models.
 
 ## Plan Before Editing

@@ -1,17 +1,20 @@
 <script setup lang="ts">
+import { Badge, ContentTemplate } from '@hugo-ui/shadcn-vue';
+
+import { getProductIcon } from '@/features/products/product-icons';
+import { formatProductStatus, getProductStatusTone } from '@/features/products/product-status';
 import { useProductsQuery } from '@/features/products/composables/useProductsQuery';
 
 const { data: products, isLoading } = useProductsQuery();
 </script>
 
 <template>
-  <section class="page">
-    <header class="page__header">
-      <p class="page__eyebrow">Products</p>
-      <h1>Products</h1>
-    </header>
-
-    <p v-if="isLoading">Loading products...</p>
+  <ContentTemplate
+    type="full"
+    page-title="Products"
+    title-info="Browse products that can be granted through licenses and allocated as organization seats."
+  >
+    <p v-if="isLoading" class="page-muted">Loading products...</p>
     <div v-else class="placeholder-grid">
       <RouterLink
         v-for="product in products"
@@ -19,33 +22,24 @@ const { data: products, isLoading } = useProductsQuery();
         class="placeholder-card"
         :to="`/products/${product.id}`"
       >
-        <h2>{{ product.name }}</h2>
+        <div class="placeholder-card__header">
+          <div class="placeholder-card__icon" aria-hidden="true">
+            <component :is="getProductIcon(product.icon)" />
+          </div>
+          <h2>{{ product.name }}</h2>
+        </div>
         <p>{{ product.description }}</p>
-        <span>{{ product.status }}</span>
+        <div class="placeholder-card__status">
+          <Badge :tone="getProductStatusTone(product.status)">
+            {{ formatProductStatus(product.status) }}
+          </Badge>
+        </div>
       </RouterLink>
     </div>
-  </section>
+  </ContentTemplate>
 </template>
 
 <style scoped>
-.page__header {
-  margin-bottom: 24px;
-}
-
-.page__eyebrow {
-  margin: 0 0 4px;
-  color: #6b7280;
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-h1 {
-  margin: 0;
-  color: #111827;
-  font-size: 28px;
-}
-
 .placeholder-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -60,11 +54,36 @@ h1 {
   border: 1px solid #d8dde6;
   border-radius: 8px;
   background: #ffffff;
+  color: inherit;
+  text-decoration: none;
 }
 
 .placeholder-card h2,
 .placeholder-card p {
   margin: 0;
+}
+
+.placeholder-card__header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.placeholder-card__icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--hugo-ui-shadcn-surface-tinted);
+  color: var(--hugo-ui-shadcn-brand-accent);
+}
+
+.placeholder-card__icon svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2;
 }
 
 .placeholder-card h2 {
@@ -76,10 +95,12 @@ h1 {
   color: #4b5563;
 }
 
-.placeholder-card span {
+.placeholder-card__status {
   align-self: end;
-  color: #166534;
-  font-size: 13px;
-  font-weight: 700;
+}
+
+.page-muted {
+  margin: 0;
+  color: #4b5563;
 }
 </style>

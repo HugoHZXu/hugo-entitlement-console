@@ -11,11 +11,5 @@ export const useAppStore = defineStore('app', {
       name: 'Riley Admin',
       email: 'riley.admin@example.com',
     },
-    sidebarCollapsed: false,
   }),
-  actions: {
-    toggleSidebar() {
-      this.sidebarCollapsed = !this.sidebarCollapsed;
-    },
-  },
 });

@@ -71,6 +71,12 @@ only enable local source inspection or version-matched development.
   the in-repo directory must be removed or moved before the symlink can be created.
 - If `entitlement-console-portfolio/hugo-ui` is a symlink to the wrong target, remove only that
   symlink and rerun setup.
-- When `shareNodeModules` is enabled, the setup script may move existing `hugo-ui` `node_modules`
-  directories into `.local/hugo-ui-node-modules-backup-*`. This keeps Vue and tool resolution on one
-  dependency tree for source-linked local development.
+- When `shareNodeModules` is enabled, the setup script may move only the Hugo UI repository root
+  `node_modules` into `.local/hugo-ui-node-modules-backup-*`, then link that root directory to this
+  app's `node_modules`. Do not move package-level directories such as
+  `packages/shadcn-vue/node_modules`; Hugo UI's own local Storybook/Vite workflow may need those
+  package workspace links.
+- If an older setup run already moved `packages/shadcn-vue/node_modules` aside, rerun
+  `pnpm run setup:local-hugo-ui`; the script should restore the latest matching backup when the
+  package directory is missing. If no backup exists, run `pnpm install` in the Hugo UI repository
+  after switching Hugo UI back to local mode.

@@ -8,14 +8,14 @@ describe('getAvailableQuantity', () => {
     const entitlement: Entitlement = {
       id: 'ent-test',
       productId: 'prod-test',
-      entitlementCode: 'ENT-TEST',
-      usageDimensionCode: 'USER_SEAT',
+      entitlementCode: 'LIC-INSIGHT-STUDIO-TEST',
+      usageDimensionCode: 'named_user_count',
       purchasedQuantity: 20,
       allocatedQuantity: 7,
       status: 'active',
       startDate: '2026-01-01',
       endDate: '2026-12-31',
-      source: 'marketplace',
+      source: 'contract',
     };
 
     expect(getAvailableQuantity(entitlement)).toBe(13);

@@ -60,6 +60,45 @@ const moveNodeModulesAside = (sourcePath, label, repoNodeModulesRealPath) => {
   console.log(`Moved ${label} node_modules aside to ${path.relative(repoRoot, backupPath)}`);
 };
 
+const restorePackageNodeModulesIfMissing = (targetRoot, packageName) => {
+  const packageNodeModules = path.join(targetRoot, 'packages', packageName, 'node_modules');
+
+  if (fs.existsSync(packageNodeModules)) {
+    return;
+  }
+
+  const localRoot = path.join(repoRoot, '.local');
+  const backupLabel = `packages__${packageName}__node_modules`;
+
+  if (!fs.existsSync(localRoot)) {
+    console.log(
+      `Missing packages/${packageName}/node_modules. Run pnpm install in the Hugo UI repository before local Hugo UI development.`
+    );
+    return;
+  }
+
+  const backupPath = fs
+    .readdirSync(localRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && entry.name.startsWith('hugo-ui-node-modules-backup-'))
+    .map((entry) => path.join(localRoot, entry.name, backupLabel))
+    .filter((candidatePath) => fs.existsSync(candidatePath))
+    .sort()
+    .at(-1);
+
+  if (!backupPath) {
+    console.log(
+      `Missing packages/${packageName}/node_modules. Run pnpm install in the Hugo UI repository before local Hugo UI development.`
+    );
+    return;
+  }
+
+  fs.mkdirSync(path.dirname(packageNodeModules), { recursive: true });
+  fs.renameSync(backupPath, packageNodeModules);
+  console.log(
+    `Restored packages/${packageName}/node_modules from ${path.relative(repoRoot, backupPath)}`
+  );
+};
+
 const ensureSharedNodeModules = (targetRoot) => {
   const repoNodeModules = path.join(repoRoot, 'node_modules');
 
@@ -84,11 +123,7 @@ const ensureSharedNodeModules = (targetRoot) => {
   }
 
   for (const packageName of ['shadcn-vue']) {
-    moveNodeModulesAside(
-      path.join(targetRoot, 'packages', packageName, 'node_modules'),
-      `packages/${packageName}/node_modules`,
-      repoNodeModulesRealPath
-    );
+    restorePackageNodeModulesIfMissing(targetRoot, packageName);
   }
 };
 

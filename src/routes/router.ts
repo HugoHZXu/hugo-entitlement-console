@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
+import ActivityLogPage from '@/pages/activity-log/ActivityLogPage.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AllocatedUsersPage from '@/pages/allocated-users/AllocatedUsersPage.vue';
-import EntitlementListPage from '@/pages/entitlements/EntitlementListPage.vue';
 import ProductDetailPage from '@/pages/products/ProductDetailPage.vue';
 import ProductListPage from '@/pages/products/ProductListPage.vue';
 
@@ -23,15 +23,15 @@ export const router = createRouter({
           component: ProductListPage,
         },
         {
+          path: 'activity-log',
+          name: 'activity-log',
+          component: ActivityLogPage,
+        },
+        {
           path: 'products/:productId',
           name: 'product-detail',
           component: ProductDetailPage,
           props: true,
-        },
-        {
-          path: 'entitlements',
-          name: 'entitlements',
-          component: EntitlementListPage,
         },
         {
           path: 'products/:productId/allocated-users',

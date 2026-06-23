@@ -3,7 +3,9 @@ export type { ActivityLogEntry, ActivityLogStatus } from './activity-log';
 export type { Entitlement, EntitlementStatus } from './entitlement';
 export type {
   Product,
+  ProductEntitlementInfo,
   ProductEntitlementSummary,
+  ProductIconName,
   ProductStatus,
   UsageDimension,
 } from './product';

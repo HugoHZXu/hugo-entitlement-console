@@ -1,153 +1,95 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router';
+import { PageTemplate, type PageTemplateNavItem } from '@hugo-ui/shadcn-vue';
+import { Activity, Package, SquareStack } from 'lucide-vue-next';
+import { computed, h } from 'vue';
+import { RouterView, useRoute, useRouter } from 'vue-router';
 
 import { useAppStore } from '@/shared/stores/app-store';
 
 const appStore = useAppStore();
+const route = useRoute();
+const router = useRouter();
+
+const navItems: PageTemplateNavItem[] = [
+  {
+    id: 'products',
+    label: 'Products',
+    icon: h(Package),
+    path: '/products',
+    children: [
+      {
+        id: 'product-activity-log',
+        label: 'Activity Log',
+        icon: h(Activity),
+        path: '/activity-log',
+      },
+    ],
+  },
+];
+
+const selectedNavItem = computed(() => {
+  if (route.name === 'activity-log') {
+    return 'product-activity-log';
+  }
+
+  return 'products';
+});
+
+function handleSelectionChange(selection: string) {
+  const selectedItem = navItems
+    .flatMap((item) => [item, ...(item.children ?? [])])
+    .find((item) => item.id === selection);
+
+  if (selectedItem?.path && selectedItem.path !== route.path) {
+    void router.push(selectedItem.path);
+  }
+}
 </script>
 
 <template>
-  <div class="app-layout" :class="{ 'app-layout--collapsed': appStore.sidebarCollapsed }">
-    <aside class="app-sidebar" aria-label="Primary navigation">
-      <div class="app-sidebar__brand">Entitlement Console</div>
-      <nav class="app-sidebar__nav">
-        <RouterLink to="/products">Products</RouterLink>
-        <RouterLink to="/entitlements">Entitlements</RouterLink>
-      </nav>
-    </aside>
-
-    <div class="app-shell">
-      <header class="app-header">
-        <button
-          class="app-header__toggle"
-          type="button"
-          aria-label="Toggle sidebar"
-          @click="appStore.toggleSidebar"
-        >
-          ≡
-        </button>
-        <div>
-          <div class="app-header__account">{{ appStore.currentAccount.name }}</div>
-          <div class="app-header__admin">{{ appStore.currentAdmin.name }}</div>
+  <PageTemplate
+    :app-icon="h(SquareStack)"
+    app-title="Entitlement Console"
+    :nav-props="{
+      navItems,
+      defaultSelected: selectedNavItem,
+      defaultExpanded: ['products'],
+    }"
+    @selection-change="handleSelectionChange"
+  >
+    <template #titleSlot>
+      <div class="app-title-slot">
+        <div class="app-title-slot__identity">
+          <span>{{ appStore.currentAccount.name }}</span>
+          <small>{{ appStore.currentAdmin.name }}</small>
         </div>
-      </header>
+      </div>
+    </template>
 
-      <main class="app-main">
-        <RouterView />
-      </main>
-    </div>
-  </div>
+    <RouterView />
+  </PageTemplate>
 </template>
 
 <style scoped>
-.app-layout {
-  display: grid;
-  min-height: 100vh;
-  grid-template-columns: 260px minmax(0, 1fr);
-}
-
-.app-layout--collapsed {
-  grid-template-columns: 88px minmax(0, 1fr);
-}
-
-.app-sidebar {
-  border-right: 1px solid #d8dde6;
-  background: #ffffff;
-}
-
-.app-sidebar__brand {
-  padding: 24px;
-  color: #111827;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.app-layout--collapsed .app-sidebar__brand {
-  font-size: 0;
-}
-
-.app-layout--collapsed .app-sidebar__brand::after {
-  content: 'EC';
-  font-size: 16px;
-}
-
-.app-sidebar__nav {
-  display: grid;
-  gap: 4px;
-  padding: 8px 12px;
-}
-
-.app-sidebar__nav a {
-  border-radius: 6px;
-  padding: 10px 12px;
-  color: #4b5563;
-  font-weight: 600;
-}
-
-.app-sidebar__nav a.router-link-active {
-  background: #eef2ff;
-  color: #3730a3;
-}
-
-.app-layout--collapsed .app-sidebar__nav a {
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.app-shell {
-  min-width: 0;
-}
-
-.app-header {
+.app-title-slot {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  min-height: 72px;
-  padding: 0 28px;
-  border-bottom: 1px solid #d8dde6;
-  background: #ffffff;
+  gap: 14px;
 }
 
-.app-header__toggle {
-  width: 36px;
-  height: 36px;
-  border: 1px solid #d8dde6;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #374151;
-  cursor: pointer;
-}
-
-.app-header__account {
-  color: #111827;
+.app-title-slot__identity {
+  display: grid;
+  gap: 2px;
   font-size: 14px;
+  text-align: right;
+}
+
+.app-title-slot__identity span {
   font-weight: 700;
-  text-align: right;
 }
 
-.app-header__admin {
-  margin-top: 2px;
-  color: #6b7280;
+.app-title-slot__identity small {
+  color: color-mix(in oklab, currentColor 76%, transparent);
   font-size: 13px;
-  text-align: right;
-}
-
-.app-main {
-  padding: 32px;
-}
-
-@media (max-width: 760px) {
-  .app-layout,
-  .app-layout--collapsed {
-    grid-template-columns: 1fr;
-  }
-
-  .app-sidebar {
-    display: none;
-  }
-
-  .app-main {
-    padding: 20px;
-  }
 }
 </style>

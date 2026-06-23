@@ -1,6 +1,6 @@
 ---
 name: entitlement-console-feature-slice
-description: Plan and implement entitlement-console-portfolio feature slices while preserving Vue app, mock API, and external Hugo UI boundaries. Use for Products, Product Detail, Entitlements, Allocated Users, or future entitlement console slices.
+description: Plan and implement entitlement-console-portfolio feature slices while preserving Vue app, mock API, and external Hugo UI boundaries. Use for Products, Product Detail, Allocated Users, Activity Log, or future entitlement console slices.
 ---
 
 # Entitlement Console Feature Slice
@@ -24,7 +24,7 @@ component API change, call out that the implementation belongs in the external H
 ## Step 2: Respect Current App Decisions
 
 - This is a standalone Vue app, not a Module Federation remote.
-- Side navigation contains Products and Entitlements only at the current scope.
+- Side navigation centers on Products. Activity Log may appear as product-scoped sub navigation for hierarchy, but it is not a global route.
 - Product detail is reached from product list rows/cards.
 - Activity Log is product-local and belongs inside Product Detail.
 - Allocated Users is reached from a product-scoped route.
