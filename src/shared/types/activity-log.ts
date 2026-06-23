@@ -14,6 +14,17 @@ export type ActivityLogSortField = 'actor' | 'summary' | 'product' | 'result' | 
 
 export type ActivityLogSortDirection = 'asc' | 'desc';
 
+export interface LocalizedMessageValue {
+  key: string;
+  value: string;
+}
+
+export interface LocalizedMessage {
+  id: string;
+  defaultMessage: string;
+  values: LocalizedMessageValue[];
+}
+
 export interface ActivityLogActor {
   type: ActivityLogActorType;
   displayName: string;
@@ -46,8 +57,9 @@ export interface ActivityLogEntry {
   actor: ActivityLogActor;
   target: ActivityLogTarget;
   action: string;
-  actionLabel: string;
+  actionLabel: LocalizedMessage;
   summary: string;
+  summaryMessage: LocalizedMessage;
   quantityDelta: number;
   result: ActivityLogStatus;
   eventTime: string;

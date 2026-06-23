@@ -1,4 +1,10 @@
-export type { AllocatedUser, AllocatedUserStatus } from './allocated-user';
+export type {
+  AllocatedUser,
+  AllocatedUserStatus,
+  UpdateProductUserAllocationsInput,
+  UserAccessCandidate,
+  UserAccessRow,
+} from './allocated-user';
 export type {
   ActivityLogActor,
   ActivityLogActorType,
@@ -11,6 +17,8 @@ export type {
   ActivityLogStatus,
   ActivityLogTarget,
   ActivityLogTargetType,
+  LocalizedMessage,
+  LocalizedMessageValue,
   RawActivityLogEntry,
 } from './activity-log';
 export type { Entitlement, EntitlementStatus } from './entitlement';

@@ -2,6 +2,7 @@
 import { ContentTemplate, DataGrid, Input, type DataGridSort } from '@hugo-ui/shadcn-vue';
 import { Search } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 import {
   activityLogDefaultSort,
@@ -13,6 +14,7 @@ import type { ActivityLogEntry, ActivityLogListInput, ActivityLogSortField } fro
 const search = ref('');
 const sort = ref<DataGridSort>(activityLogDefaultSort);
 const columns = useActivityLogColumns();
+const { t } = useI18n();
 
 const queryInput = computed<ActivityLogListInput>(() => {
   const input: ActivityLogListInput = {};
@@ -47,16 +49,16 @@ function handleSortChange(nextSort: DataGridSort) {
 <template>
   <ContentTemplate
     type="table"
-    page-title="Activity Log"
-    title-info="Synthetic entitlement activity records loaded through the mock API layer."
+    :page-title="t('pages.activityLog.title')"
+    :title-info="t('pages.activityLog.titleInfo')"
   >
     <div class="activity-log-page">
       <div class="activity-log-toolbar">
         <div class="activity-log-toolbar__search">
           <Input
             v-model="search"
-            aria-label="Search activity logs"
-            placeholder="Search activity logs"
+            :aria-label="t('pages.activityLog.searchAriaLabel')"
+            :placeholder="t('pages.activityLog.searchPlaceholder')"
             type="search"
           >
             <template #start-icon>
@@ -65,13 +67,15 @@ function handleSortChange(nextSort: DataGridSort) {
           </Input>
         </div>
 
-        <p class="activity-log-toolbar__count">{{ totalElements }} activity records</p>
+        <p class="activity-log-toolbar__count">
+          {{ t('pages.activityLog.recordCount', { count: totalElements }) }}
+        </p>
       </div>
 
       <DataGrid
-        aria-label="Activity Log"
+        :aria-label="t('pages.activityLog.ariaLabel')"
         :columns="columns"
-        empty="No activity records match the current query."
+        :empty="t('pages.activityLog.empty')"
         :get-row-id="getActivityLogRowId"
         :height="620"
         :loading="isLoading || isFetching"

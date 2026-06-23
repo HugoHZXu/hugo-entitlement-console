@@ -2,15 +2,75 @@ import type {
   ActivityLogActor,
   ActivityLogEntry,
   ActivityLogKnownAction,
+  LocalizedMessage,
+  LocalizedMessageValue,
   Product,
   RawActivityLogEntry,
 } from '@/shared/types';
+
+type ActivityMessageKey =
+  | 'ENTITLEMENT_CREATED'
+  | 'QUANTITY_UPDATED'
+  | 'USER_ALLOCATED'
+  | 'USER_ALLOCATION_FAILED'
+  | 'USER_REVOKED'
+  | 'UNKNOWN';
+
+type ActivityDefinition = {
+  actionLabelDefaultMessage: string;
+  actionMessageKey: Exclude<ActivityMessageKey, 'USER_ALLOCATION_FAILED'>;
+  summaryDefaultMessage: string;
+  summaryMessageKey: ActivityMessageKey;
+};
+
+const ACTIVITY_MESSAGE_NAMESPACE = 'entitlementConsole.activity';
 
 const actionLabels: Record<ActivityLogKnownAction, string> = {
   'entitlement.created': 'Entitlement created',
   'quantity.updated': 'Quantity updated',
   'user.allocated': 'User allocated',
   'user.revoked': 'User revoked',
+};
+
+const activityDefinitions: Record<ActivityLogKnownAction, ActivityDefinition> = {
+  'entitlement.created': {
+    actionLabelDefaultMessage: 'Entitlement created',
+    actionMessageKey: 'ENTITLEMENT_CREATED',
+    summaryDefaultMessage: '{targetName} was created for {productName} ({quantityText}).',
+    summaryMessageKey: 'ENTITLEMENT_CREATED',
+  },
+  'quantity.updated': {
+    actionLabelDefaultMessage: 'Quantity updated',
+    actionMessageKey: 'QUANTITY_UPDATED',
+    summaryDefaultMessage: '{targetName} quantity changed by {quantityText}.',
+    summaryMessageKey: 'QUANTITY_UPDATED',
+  },
+  'user.allocated': {
+    actionLabelDefaultMessage: 'User allocated',
+    actionMessageKey: 'USER_ALLOCATED',
+    summaryDefaultMessage: '{targetName} was allocated access to {productName} ({quantityText}).',
+    summaryMessageKey: 'USER_ALLOCATED',
+  },
+  'user.revoked': {
+    actionLabelDefaultMessage: 'User revoked',
+    actionMessageKey: 'USER_REVOKED',
+    summaryDefaultMessage: '{targetName} access was revoked from {productName} ({quantityText}).',
+    summaryMessageKey: 'USER_REVOKED',
+  },
+};
+
+const failedAllocationDefinition: ActivityDefinition = {
+  actionLabelDefaultMessage: 'User allocated',
+  actionMessageKey: 'USER_ALLOCATED',
+  summaryDefaultMessage: 'Allocation attempt for {targetName} failed on {productName}.',
+  summaryMessageKey: 'USER_ALLOCATION_FAILED',
+};
+
+const unknownDefinition: ActivityDefinition = {
+  actionLabelDefaultMessage: 'Unrecognized activity',
+  actionMessageKey: 'UNKNOWN',
+  summaryDefaultMessage: 'Unrecognized activity recorded for {targetName}.',
+  summaryMessageKey: 'UNKNOWN',
 };
 
 const fallbackActor: ActivityLogActor = {
@@ -27,42 +87,78 @@ function getProductName(productId: string, products: Product[]): string {
   return products.find((product) => product.id === productId)?.name ?? 'Unknown product';
 }
 
-function getQuantityText(quantityDelta: number): string {
+function getQuantityDeltaText(quantityDelta: number): string {
   if (quantityDelta > 0) {
-    return `+${quantityDelta} seats`;
+    return `+${quantityDelta}`;
   }
 
-  if (quantityDelta < 0) {
-    return `${quantityDelta} seats`;
-  }
-
-  return 'no quantity change';
+  return `${quantityDelta}`;
 }
 
-function getActivitySummary(event: RawActivityLogEntry, productName: string): string {
-  const quantityText = getQuantityText(event.quantityDelta);
+function getDefaultQuantityText(quantityDelta: number): string {
+  const absoluteQuantity = Math.abs(quantityDelta);
+  const seatLabel = absoluteQuantity === 1 ? 'seat' : 'seats';
 
+  return `${getQuantityDeltaText(quantityDelta)} ${seatLabel}`;
+}
+
+function getActivityDefinition(event: RawActivityLogEntry): ActivityDefinition {
   if (event.action === 'user.allocated' && event.status === 'failed') {
-    return `Allocation attempt for ${event.target.name} failed on ${productName}.`;
+    return failedAllocationDefinition;
   }
 
-  if (event.action === 'user.allocated') {
-    return `${event.target.name} was allocated access to ${productName} (${quantityText}).`;
-  }
+  return activityDefinitions[event.action as ActivityLogKnownAction] ?? unknownDefinition;
+}
 
-  if (event.action === 'user.revoked') {
-    return `${event.target.name} access was revoked from ${productName} (${quantityText}).`;
-  }
+const valuesToRecord = (values: LocalizedMessageValue[]) =>
+  values.reduce<Record<string, string>>((result, item) => {
+    result[item.key] = item.value;
+    return result;
+  }, {});
 
-  if (event.action === 'quantity.updated') {
-    return `${event.target.name} quantity changed by ${quantityText}.`;
-  }
+function interpolateMessage(message: LocalizedMessage): string {
+  const values = valuesToRecord(message.values);
 
-  if (event.action === 'entitlement.created') {
-    return `${event.target.name} was created for ${productName} (${quantityText}).`;
-  }
+  return message.defaultMessage.replace(/\{([a-zA-Z0-9_]+)\}/g, (_match, key: string) => {
+    return values[key] ?? '';
+  });
+}
 
-  return `${getActionLabel(event.action)} recorded for ${event.target.name}.`;
+function createMessageValues(
+  event: RawActivityLogEntry,
+  productName: string,
+  actionName: string
+): LocalizedMessageValue[] {
+  return [
+    { key: 'targetName', value: event.target.name },
+    { key: 'productName', value: productName },
+    { key: 'quantityDelta', value: String(event.quantityDelta) },
+    { key: 'quantityDeltaText', value: getQuantityDeltaText(event.quantityDelta) },
+    { key: 'quantityText', value: getDefaultQuantityText(event.quantityDelta) },
+    { key: 'actionName', value: actionName },
+  ];
+}
+
+function createActionLabel(
+  definition: ActivityDefinition,
+  values: LocalizedMessageValue[]
+): LocalizedMessage {
+  return {
+    id: `${ACTIVITY_MESSAGE_NAMESPACE}.action.${definition.actionMessageKey}`,
+    defaultMessage: definition.actionLabelDefaultMessage,
+    values,
+  };
+}
+
+function createSummaryMessage(
+  definition: ActivityDefinition,
+  values: LocalizedMessageValue[]
+): LocalizedMessage {
+  return {
+    id: `${ACTIVITY_MESSAGE_NAMESPACE}.summary.${definition.summaryMessageKey}`,
+    defaultMessage: definition.summaryDefaultMessage,
+    values,
+  };
 }
 
 export function normalizeActivityLogEntry(
@@ -70,6 +166,11 @@ export function normalizeActivityLogEntry(
   products: Product[]
 ): ActivityLogEntry {
   const productName = getProductName(event.productId, products);
+  const definition = getActivityDefinition(event);
+  const actionName = getActionLabel(event.action);
+  const values = createMessageValues(event, productName, actionName);
+  const actionLabel = createActionLabel(definition, values);
+  const summaryMessage = createSummaryMessage(definition, values);
 
   return {
     id: event.id,
@@ -79,8 +180,9 @@ export function normalizeActivityLogEntry(
     actor: event.actor ?? fallbackActor,
     target: event.target,
     action: event.action,
-    actionLabel: getActionLabel(event.action),
-    summary: getActivitySummary(event, productName),
+    actionLabel,
+    summary: interpolateMessage(summaryMessage),
+    summaryMessage,
     quantityDelta: event.quantityDelta,
     result: event.status,
     eventTime: event.occurredAt,

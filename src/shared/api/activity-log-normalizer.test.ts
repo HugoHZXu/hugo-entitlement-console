@@ -32,9 +32,18 @@ describe('normalizeActivityLogEntry', () => {
 
     expect(entry.actor.displayName).toBe('Riley Admin');
     expect(entry.productName).toBe('Insight Studio');
-    expect(entry.actionLabel).toBe('User allocated');
+    expect(entry.actionLabel).toEqual({
+      defaultMessage: 'User allocated',
+      id: 'entitlementConsole.activity.action.USER_ALLOCATED',
+      values: expect.arrayContaining([
+        { key: 'targetName', value: 'Amelia Hart' },
+        { key: 'productName', value: 'Insight Studio' },
+        { key: 'quantityDelta', value: '-1' },
+      ]),
+    });
     expect(entry.result).toBe('success');
     expect(entry.summary).toContain('Amelia Hart was allocated access');
+    expect(entry.summaryMessage.id).toBe('entitlementConsole.activity.summary.USER_ALLOCATED');
   });
 
   it('normalizes failed allocation copy', () => {
@@ -49,6 +58,10 @@ describe('normalizeActivityLogEntry', () => {
 
     expect(entry.result).toBe('failed');
     expect(entry.summary).toBe('Allocation attempt for Amelia Hart failed on Insight Studio.');
+    expect(entry.summaryMessage).toMatchObject({
+      defaultMessage: 'Allocation attempt for {targetName} failed on {productName}.',
+      id: 'entitlementConsole.activity.summary.USER_ALLOCATION_FAILED',
+    });
   });
 
   it('uses a system fallback when the raw event has no actor', () => {
@@ -80,7 +93,11 @@ describe('normalizeActivityLogEntry', () => {
       mockProducts
     );
 
-    expect(entry.actionLabel).toBe('Unrecognized activity');
+    expect(entry.actionLabel).toMatchObject({
+      defaultMessage: 'Unrecognized activity',
+      id: 'entitlementConsole.activity.action.UNKNOWN',
+    });
+    expect(entry.summaryMessage.id).toBe('entitlementConsole.activity.summary.UNKNOWN');
     expect(entry.summary).toBe('Unrecognized activity recorded for LIC-INSIGHT-STUDIO-2026.');
   });
 });

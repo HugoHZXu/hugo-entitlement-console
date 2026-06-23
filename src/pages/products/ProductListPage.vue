@@ -1,20 +1,24 @@
 <script setup lang="ts">
 import { Badge, ContentTemplate } from '@hugo-ui/shadcn-vue';
+import { useI18n } from 'vue-i18n';
 
+import { useProductDisplay } from '@/features/products/product-display';
 import { getProductIcon } from '@/features/products/product-icons';
-import { formatProductStatus, getProductStatusTone } from '@/features/products/product-status';
+import { getProductStatusMessageKey, getProductStatusTone } from '@/features/products/product-status';
 import { useProductsQuery } from '@/features/products/composables/useProductsQuery';
 
 const { data: products, isLoading } = useProductsQuery();
+const { t } = useI18n();
+const { formatProductDescription, formatProductName } = useProductDisplay();
 </script>
 
 <template>
   <ContentTemplate
     type="full"
-    page-title="Products"
-    title-info="Browse products that can be granted through licenses and allocated as organization seats."
+    :page-title="t('pages.products.title')"
+    :title-info="t('pages.products.titleInfo')"
   >
-    <p v-if="isLoading" class="page-muted">Loading products...</p>
+    <p v-if="isLoading" class="page-muted">{{ t('pages.products.loading') }}</p>
     <div v-else class="placeholder-grid">
       <RouterLink
         v-for="product in products"
@@ -26,12 +30,12 @@ const { data: products, isLoading } = useProductsQuery();
           <div class="placeholder-card__icon" aria-hidden="true">
             <component :is="getProductIcon(product.icon)" />
           </div>
-          <h2>{{ product.name }}</h2>
+          <h2>{{ formatProductName(product) }}</h2>
         </div>
-        <p>{{ product.description }}</p>
+        <p>{{ formatProductDescription(product) }}</p>
         <div class="placeholder-card__status">
           <Badge :tone="getProductStatusTone(product.status)">
-            {{ formatProductStatus(product.status) }}
+            {{ t(getProductStatusMessageKey(product.status)) }}
           </Badge>
         </div>
       </RouterLink>

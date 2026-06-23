@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { Badge, Button, Card, ContentTemplate, DataGrid } from '@hugo-ui/shadcn-vue';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { RouterLink, useRouter } from 'vue-router';
 
 import { useProductActivityLogColumns } from '@/features/activity-log/activity-display';
 import { useActivityLogQuery } from '@/features/activity-log/composables/useActivityLogQuery';
 import { useProductEntitlementSummaryQuery } from '@/features/entitlements/composables/useEntitlementsQuery';
+import { useProductDisplay } from '@/features/products/product-display';
 import { getProductIcon } from '@/features/products/product-icons';
-import { formatProductStatus, getProductStatusTone } from '@/features/products/product-status';
+import { getProductStatusMessageKey, getProductStatusTone } from '@/features/products/product-status';
 import { useProductQuery } from '@/features/products/composables/useProductsQuery';
 import type { ActivityLogEntry } from '@/shared/types';
 
@@ -15,6 +17,7 @@ const props = defineProps<{
   productId: string;
 }>();
 
+const { t } = useI18n();
 const router = useRouter();
 const { data: product } = useProductQuery(computed(() => props.productId));
 const { data: entitlementSummary } = useProductEntitlementSummaryQuery(
@@ -29,6 +32,14 @@ const productIcon = computed(() =>
   product.value ? getProductIcon(product.value.icon) : undefined
 );
 const activityLogColumns = useProductActivityLogColumns();
+const {
+  formatAllocationModel,
+  formatGrantType,
+  formatProductDescription,
+  formatProductName,
+  formatProvider,
+  formatRenewalDate,
+} = useProductDisplay();
 
 function goBackToProducts() {
   void router.push('/products');
@@ -42,74 +53,73 @@ function getActivityLogRowId(row: ActivityLogEntry) {
 <template>
   <ContentTemplate
     type="full"
-    :page-title="product?.name ?? 'Product detail'"
+    :page-title="product ? formatProductName(product) : t('pages.productDetail.fallbackTitle')"
     :title-info="
-      product?.description ??
-      'Product information, entitlement allocation summary, and product-local activity.'
+      product ? formatProductDescription(product) : t('pages.productDetail.fallbackTitleInfo')
     "
     @back="goBackToProducts"
   >
     <div class="detail-grid">
-      <Card aria-label="Product Information">
+      <Card :aria-label="t('pages.productDetail.productInfoAriaLabel')">
         <div class="product-info">
-          <h3 class="product-info__title">Product Details</h3>
+          <h3 class="product-info__title">{{ t('pages.productDetail.productInfoTitle') }}</h3>
           <dl v-if="product" class="product-info__list">
             <div class="product-info__item">
-              <dt>Provider</dt>
+              <dt>{{ t('pages.productDetail.fields.provider') }}</dt>
               <span aria-hidden="true">:</span>
-              <dd>{{ product.provider }}</dd>
+              <dd>{{ formatProvider(product) }}</dd>
             </div>
             <div class="product-info__item">
-              <dt>Status</dt>
+              <dt>{{ t('pages.productDetail.fields.status') }}</dt>
               <span aria-hidden="true">:</span>
               <dd>
                 <Badge :tone="getProductStatusTone(product.status)">
-                  {{ formatProductStatus(product.status) }}
+                  {{ t(getProductStatusMessageKey(product.status)) }}
                 </Badge>
               </dd>
             </div>
             <div class="product-info__item">
-              <dt>Entitlement code</dt>
+              <dt>{{ t('pages.productDetail.fields.entitlementCode') }}</dt>
               <span aria-hidden="true">:</span>
               <dd>{{ product.entitlementInfo.entitlementCode }}</dd>
             </div>
             <div class="product-info__item">
-              <dt>Grant type</dt>
+              <dt>{{ t('pages.productDetail.fields.grantType') }}</dt>
               <span aria-hidden="true">:</span>
-              <dd>{{ product.entitlementInfo.grantType }}</dd>
+              <dd>{{ formatGrantType(product) }}</dd>
             </div>
             <div class="product-info__item">
-              <dt>Allocation model</dt>
+              <dt>{{ t('pages.productDetail.fields.allocationModel') }}</dt>
               <span aria-hidden="true">:</span>
-              <dd>{{ product.entitlementInfo.allocationModel }}</dd>
+              <dd>{{ formatAllocationModel(product) }}</dd>
             </div>
             <div class="product-info__item">
-              <dt>Dimension API name</dt>
+              <dt>{{ t('pages.productDetail.fields.dimensionApiName') }}</dt>
               <span aria-hidden="true">:</span>
               <dd>{{ product.usageDimensions[0]?.code ?? 'n/a' }}</dd>
             </div>
             <div class="product-info__item">
-              <dt>Subscriber account</dt>
+              <dt>{{ t('pages.productDetail.fields.subscriberAccount') }}</dt>
               <span aria-hidden="true">:</span>
               <dd>{{ product.entitlementInfo.subscriberAccountId }}</dd>
             </div>
             <div class="product-info__item">
-              <dt>Renewal date</dt>
+              <dt>{{ t('pages.productDetail.fields.renewalDate') }}</dt>
               <span aria-hidden="true">:</span>
-              <dd>{{ product.entitlementInfo.renewalDate }}</dd>
+              <dd>{{ formatRenewalDate(product) }}</dd>
             </div>
           </dl>
         </div>
       </Card>
 
-      <Card class="seat-card" aria-label="Seat Allocation">
+      <Card class="seat-card" :aria-label="t('pages.productDetail.seatAllocationAriaLabel')">
         <div class="seat-card__icon" aria-hidden="true">
           <component :is="productIcon" v-if="productIcon" />
         </div>
 
         <div class="seat-card__total">
           <strong class="seat-card__value">{{ entitlementSummary?.purchasedQuantity ?? 0 }}</strong>
-          <span class="seat-card__label">seats</span>
+          <span class="seat-card__label">{{ t('pages.productDetail.seatLabels.seats') }}</span>
         </div>
 
         <div class="seat-card__stats">
@@ -117,13 +127,17 @@ function getActivityLogRowId(row: ActivityLogEntry) {
             <strong class="seat-card__value seat-card__value--stat">
               {{ entitlementSummary?.availableQuantity ?? 0 }}
             </strong>
-            <span class="seat-card__label seat-card__label--stat">available</span>
+            <span class="seat-card__label seat-card__label--stat">
+              {{ t('pages.productDetail.seatLabels.available') }}
+            </span>
           </div>
           <div class="seat-card__stat seat-card__stat--used">
             <strong class="seat-card__value seat-card__value--stat">
               {{ entitlementSummary?.allocatedQuantity ?? 0 }}
             </strong>
-            <span class="seat-card__label seat-card__label--stat">used</span>
+            <span class="seat-card__label seat-card__label--stat">
+              {{ t('pages.productDetail.seatLabels.used') }}
+            </span>
           </div>
         </div>
 
@@ -134,16 +148,23 @@ function getActivityLogRowId(row: ActivityLogEntry) {
           :to="`/products/${product.id}/allocated-users`"
         >
           <div class="seat-card__action">
-            <Button as="a" :href="href" size="lg" @click="navigate">Manage user access</Button>
+            <Button as="a" :href="href" size="lg" @click="navigate">
+              {{ t('pages.productDetail.manageUserAccess') }}
+            </Button>
           </div>
         </RouterLink>
       </Card>
 
-      <ContentTemplate id="activity-log" class="panel--wide" type="table" page-title="Activity Log">
+      <ContentTemplate
+        id="activity-log"
+        class="panel--wide"
+        type="table"
+        :page-title="t('pages.productDetail.activityTitle')"
+      >
         <DataGrid
-          aria-label="Product activity log"
+          :aria-label="t('pages.productDetail.activityAriaLabel')"
           :columns="activityLogColumns"
-          empty="No activity records for this product."
+          :empty="t('pages.productDetail.activityEmpty')"
           :get-row-id="getActivityLogRowId"
           :height="360"
           :loading="isActivityLogLoading || isActivityLogFetching"

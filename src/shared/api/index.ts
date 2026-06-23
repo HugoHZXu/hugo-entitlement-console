@@ -6,5 +6,8 @@ export {
   listAllocatedUsers,
   listEntitlements,
   listEntitlementsByProduct,
+  listProductUserAccess,
   listProducts,
+  resetMockEntitlementApiState,
+  updateProductUserAllocations,
 } from './entitlement-api';
