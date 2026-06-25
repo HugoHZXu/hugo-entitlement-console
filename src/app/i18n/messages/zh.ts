@@ -1,7 +1,7 @@
 const zhMessages = {
   app: {
     languageToggleLabel: '切换语言',
-    title: '授权控制台',
+    title: 'Hugo 产品授权管理控制台',
   },
   nav: {
     activityLog: '活动日志',

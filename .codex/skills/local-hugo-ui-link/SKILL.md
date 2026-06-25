@@ -1,11 +1,11 @@
 ---
 name: local-hugo-ui-link
-description: Set up or repair entitlement-console-portfolio local development against a separately cloned hugo-ui repository through the reusable symlink workflow. Use when the user asks to link this app to local hugo-ui without npm publishing, configure cross-repo local UI imports, create .local/hugo-ui.json, troubleshoot the hugo-ui symlink, or verify @hugo-ui/shadcn-vue resolves from a local clone.
+description: Set up or repair hugo-entitlement-console local development against a separately cloned hugo-ui repository through the reusable symlink workflow. Use when the user asks to link this app to local hugo-ui without npm publishing, configure cross-repo local UI imports, create .local/hugo-ui.json, troubleshoot the hugo-ui symlink, or verify @hugo-ui/shadcn-vue resolves from a local clone.
 ---
 
 # Local Hugo UI Link
 
-Use this skill to connect `entitlement-console-portfolio` to a local `hugo-ui` clone without
+Use this skill to connect `hugo-entitlement-console` to a local `hugo-ui` clone without
 publishing npm packages. Keep the reusable script generic; put machine-specific paths only in
 ignored local config.
 
@@ -18,7 +18,7 @@ ignored local config.
 
 ```text
 <WORKSPACE_ROOT>/
-  entitlement-console-portfolio/
+  hugo-entitlement-console/
   hugo-ui/
 ```
 
@@ -29,7 +29,7 @@ ignored local config.
 
 ## Workflow
 
-1. Confirm the current repo is `entitlement-console-portfolio`.
+1. Confirm the current repo is `hugo-entitlement-console`.
 2. Check whether `../hugo-ui` exists and contains `packages/shadcn-vue/src/index.ts`.
 3. If no local `hugo-ui` clone can be found, ask the user for `<HUGO_UI_ROOT>` instead of guessing.
 4. Create `.local/hugo-ui.json` with this shape:
@@ -67,9 +67,9 @@ only enable local source inspection or version-matched development.
 
 ## Repair Notes
 
-- If `entitlement-console-portfolio/hugo-ui` is a real directory, do not overwrite it. Report that
+- If `hugo-entitlement-console/hugo-ui` is a real directory, do not overwrite it. Report that
   the in-repo directory must be removed or moved before the symlink can be created.
-- If `entitlement-console-portfolio/hugo-ui` is a symlink to the wrong target, remove only that
+- If `hugo-entitlement-console/hugo-ui` is a symlink to the wrong target, remove only that
   symlink and rerun setup.
 - When `shareNodeModules` is enabled, the setup script may move only the Hugo UI repository root
   `node_modules` into `.local/hugo-ui-node-modules-backup-*`, then link that root directory to this

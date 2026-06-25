@@ -1,6 +1,6 @@
 ---
 name: portfolio-desensitization-review
-description: Review entitlement-console-portfolio changes for public portfolio safety. Use before or after adding mock data, business copy, README/docs content, Activity Log examples, or code inspired by prior private projects.
+description: Review hugo-entitlement-console changes for public portfolio safety. Use before or after adding mock data, business copy, README/docs content, Activity Log examples, or code inspired by prior private projects.
 ---
 
 # Portfolio Desensitization Review

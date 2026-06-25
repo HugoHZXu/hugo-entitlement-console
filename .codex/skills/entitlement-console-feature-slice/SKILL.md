@@ -1,9 +1,9 @@
 ---
 name: entitlement-console-feature-slice
-description: Plan and implement entitlement-console-portfolio feature slices while preserving Vue app, mock API, and external Hugo UI boundaries. Use for Products, Product Detail, Allocated Users, Activity Log, or future entitlement console slices.
+description: Plan and implement hugo-entitlement-console feature slices while preserving Vue app, mock API, and external Hugo UI boundaries. Use for Products, Product Detail, Allocated Users, Activity Log, or future entitlement console slices.
 ---
 
-# Entitlement Console Feature Slice
+# Hugo Entitlement Console Feature Slice
 
 Use this skill before building business features in `src/pages`, `src/features`, `src/shared/api`,
 or `src/shared/mocks`.

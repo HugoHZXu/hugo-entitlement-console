@@ -103,7 +103,7 @@ const ensureSharedNodeModules = (targetRoot) => {
   const repoNodeModules = path.join(repoRoot, 'node_modules');
 
   if (!fs.existsSync(repoNodeModules)) {
-    console.log('Entitlement Console node_modules is not installed yet.');
+    console.log('Hugo Entitlement Console node_modules is not installed yet.');
     console.log('Run pnpm install, then rerun setup:local-hugo-ui to share node_modules.');
     return;
   }

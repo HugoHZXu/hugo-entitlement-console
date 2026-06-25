@@ -1,7 +1,7 @@
 const enMessages = {
   app: {
     languageToggleLabel: 'Switch language',
-    title: 'Entitlement Console',
+    title: 'Hugo Entitlement Console',
   },
   nav: {
     activityLog: 'Activity Log',

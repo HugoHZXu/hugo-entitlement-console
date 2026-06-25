@@ -1,10 +1,10 @@
 # Architecture
 
-This document describes the current architecture of the Entitlement Console portfolio app. The app is a standalone Vue 3 product surface for a desensitized B2B SaaS entitlement management workflow.
+This document describes the current architecture of the Hugo Entitlement Console portfolio app. The app is a standalone Vue 3 product surface for a desensitized B2B SaaS entitlement management workflow.
 
 ## Application Role
 
-The app owns its own routing, page composition, mock API layer, synthetic data, and product-local view models. It is conceptually related to the broader SaaS admin portfolio, but it is intentionally kept as an independent Vue and Tailwind CSS application instead of being wired into a micro frontend workspace.
+The app owns its own routing, page composition, mock API layer, synthetic data, and product-local view models. It is conceptually related to the broader Hugo SaaS management console portfolio, but it is intentionally kept as an independent Vue and Tailwind CSS application instead of being wired into a micro frontend workspace.
 
 It does not connect to a real backend. All product, entitlement, allocated user, and activity data is synthetic.
 

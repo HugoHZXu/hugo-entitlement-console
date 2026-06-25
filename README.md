@@ -1,6 +1,6 @@
-# Entitlement Console
+# Hugo Entitlement Console
 
-Standalone Vue 3 portfolio app for B2B entitlement management.
+This is a portfolio app for B2B product entitlement management.
 
 This repository contains a desensitized admin console for product entitlement management. Products are the primary navigation surface; allocated users, available quantity, usage dimensions, and Activity Log views are presented around the product workflow.
 
@@ -34,9 +34,9 @@ The app uses synthetic mock data only and does not connect to a real backend.
 
 ## Related Portfolio Projects
 
-This project is part of the same portfolio SaaS system as [HugoHZXu/saas-admin-dashboard-portfolio](https://github.com/HugoHZXu/saas-admin-dashboard-portfolio).
+This project belongs to the same Hugo SaaS management console portfolio system as [HugoHZXu/hugo-saas-console](https://github.com/HugoHZXu/hugo-saas-console).
 
-Conceptually, this entitlement console represents another product surface in the same B2B SaaS administration domain. If it were built with the same frontend stack and integration conventions as the SaaS admin dashboard, it could fit into that portfolio as a workspace-level module within the shared data model and micro frontend architecture.
+Conceptually, Hugo Entitlement Console represents another product surface in the same B2B SaaS administration domain. If it were built with the same frontend stack and integration conventions as Hugo SaaS Console, it could fit into that portfolio as a workspace-level module within the shared data model and micro frontend architecture.
 
 This repository is intentionally kept as a standalone Vue 3 and Tailwind CSS application so I can practice building a focused product experience with a different frontend stack while preserving the same desensitized SaaS domain model.
 
