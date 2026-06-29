@@ -1,4 +1,4 @@
-export type AllocatedUserStatus = 'active' | 'pending' | 'revoked';
+export type AllocatedUserStatus = 'active' | 'pending' | 'revoked' | (string & {});
 
 export interface AllocatedUser {
   id: string;
@@ -10,6 +10,7 @@ export interface AllocatedUser {
   department: string;
   status: AllocatedUserStatus;
   allocatedAt: string;
+  sourceJobId?: string | null;
 }
 
 export interface UserAccessCandidate {
@@ -30,6 +31,7 @@ export interface UserAccessRow extends UserAccessCandidate {
 }
 
 export interface UpdateProductUserAllocationsInput {
+  organizationId?: string | null;
   productId: string;
   selectedUserIds: string[];
 }

@@ -233,6 +233,7 @@ async function submitChanges() {
         :selected-row-ids="selectedRowIds"
         :show-header-checkbox="false"
         show-checkbox-column
+        virtualized
         @selected-row-ids-change="handleSelectedRowIdsChange"
       />
     </div>

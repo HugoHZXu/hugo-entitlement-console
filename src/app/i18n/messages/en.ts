@@ -16,6 +16,7 @@ const enMessages = {
       revoked: 'Revoked',
       scheduled: 'Scheduled',
       success: 'Success',
+      unknown: 'Unknown',
     },
   },
   pages: {
@@ -26,7 +27,7 @@ const enMessages = {
       searchAriaLabel: 'Search activity logs',
       searchPlaceholder: 'Search activity logs',
       title: 'Activity Log',
-      titleInfo: 'Synthetic entitlement activity records loaded through the mock API layer.',
+      titleInfo: 'Entitlement activity records loaded from the local portfolio service.',
     },
     allocatedUsers: {
       actions: {

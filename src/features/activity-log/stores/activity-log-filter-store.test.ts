@@ -10,7 +10,7 @@ describe('activity log filter store', () => {
     setActivePinia(createPinia());
   });
 
-  it('starts with the default Activity Log sort and no search query', () => {
+  it('starts with the default Activity Log sort, pagination, and no search query', () => {
     const store = useActivityLogFilterStore();
 
     expect(store.sort).toEqual({
@@ -18,18 +18,22 @@ describe('activity log filter store', () => {
       direction: 'desc',
     });
     expect(store.queryInput).toEqual({
+      pageNumber: 0,
+      pageSize: 50,
       sortDirection: 'desc',
       sortField: 'eventTime',
     });
   });
 
-  it('trims search text for the mock API query without rewriting the input value', () => {
+  it('trims search text for the service query without rewriting the input value', () => {
     const store = useActivityLogFilterStore();
 
     store.setSearchString('  Amelia Hart  ');
 
     expect(store.searchString).toBe('  Amelia Hart  ');
     expect(store.queryInput).toEqual({
+      pageNumber: 0,
+      pageSize: 50,
       searchString: 'Amelia Hart',
       sortDirection: 'desc',
       sortField: 'eventTime',
@@ -49,9 +53,48 @@ describe('activity log filter store', () => {
       direction: 'asc',
     });
     expect(store.queryInput).toEqual({
+      pageNumber: 0,
+      pageSize: 50,
       sortDirection: 'asc',
       sortField: 'actor',
     });
+  });
+
+  it('resets to the first page when filters change', () => {
+    const store = useActivityLogFilterStore();
+
+    store.setPageNumber(3);
+    store.setSearchString('quantity');
+
+    expect(store.pageNumber).toBe(0);
+
+    store.setPageNumber(4);
+    store.setSort({
+      columnId: 'summary',
+      direction: 'asc',
+    });
+
+    expect(store.pageNumber).toBe(0);
+  });
+
+  it('limits page size to the supported Activity Log page size options', () => {
+    const store = useActivityLogFilterStore();
+
+    store.setPageNumber(2);
+    store.setPageSize(100);
+
+    expect(store.pageSize).toBe(100);
+    expect(store.pageNumber).toBe(0);
+    expect(store.queryInput).toEqual({
+      pageNumber: 0,
+      pageSize: 100,
+      sortDirection: 'desc',
+      sortField: 'eventTime',
+    });
+
+    store.setPageSize(500);
+
+    expect(store.pageSize).toBe(50);
   });
 
   it('ignores unsupported sort columns from generic grid events', () => {
@@ -80,6 +123,8 @@ describe('activity log filter store', () => {
 
     expect(store.searchString).toBe('');
     expect(store.queryInput).toEqual({
+      pageNumber: 0,
+      pageSize: 50,
       sortDirection: 'desc',
       sortField: 'eventTime',
     });

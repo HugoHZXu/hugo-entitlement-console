@@ -1,4 +1,4 @@
-import { ChartNoAxesColumnIncreasing, ShieldCheck, Workflow } from 'lucide-vue-next';
+import { ChartNoAxesColumnIncreasing, Package, ShieldCheck, Workflow } from 'lucide-vue-next';
 import type { Component } from 'vue';
 
 import type { ProductIconName } from '@/shared/types';
@@ -9,6 +9,6 @@ const productIcons: Record<ProductIconName, Component> = {
   'workflow-hub': Workflow,
 };
 
-export function getProductIcon(icon: ProductIconName) {
-  return productIcons[icon];
+export function getProductIcon(icon: ProductIconName): Component {
+  return productIcons[icon as keyof typeof productIcons] ?? Package;
 }

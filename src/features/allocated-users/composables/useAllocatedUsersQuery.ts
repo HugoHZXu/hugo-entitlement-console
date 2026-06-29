@@ -50,6 +50,12 @@ export function useUpdateProductUserAllocationsMutation(productId: MaybeRefOrGet
         queryClient.invalidateQueries({
           queryKey: queryKeys.entitlements,
         }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.productActivityLogs(resolvedProductId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.activityLogsRoot,
+        }),
       ]);
     },
   });

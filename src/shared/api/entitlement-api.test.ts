@@ -2,158 +2,221 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  getProductEntitlementSummary,
-  listActivityLog,
-  listActivityLogs,
-  listAllocatedUsers,
-  listEntitlements,
-  listProductUserAccess,
-  resetMockEntitlementApiState,
-  updateProductUserAllocations,
-} from './entitlement-api';
+import type { ActivityLogListResult, Product, UserAccessRow } from '@/shared/types';
+import { listActivityLogs, listProducts, updateProductUserAllocations } from './entitlement-api';
 
-async function resolveActivityLogs(input: Parameters<typeof listActivityLogs>[0] = {}) {
-  vi.useFakeTimers();
-  const activityLogsPromise = listActivityLogs(input);
+const product: Product = {
+  description: 'Analytics product granted through a contract license.',
+  entitlementInfo: {
+    allocationModel: 'Named-user allocation',
+    entitlementCode: 'LIC-INSIGHT-STUDIO-2026',
+    grantType: 'Contract license',
+    renewalDate: '2027-01-14',
+    subscriberAccountId: 'account-1001',
+    subscriberId: 'subscriber-1001',
+  },
+  icon: 'insight-studio',
+  id: 'prod-insight-studio',
+  name: 'Insight Studio',
+  provider: 'Licensing Catalog',
+  status: 'active',
+  supportedPlatforms: ['Admin console'],
+  usageDimensions: [
+    {
+      code: 'named_user_count',
+      description: 'Assignable named-user seats.',
+      name: 'Named users',
+      unit: 'seat',
+    },
+  ],
+};
 
-  await vi.runAllTimersAsync();
+const activityLogs: ActivityLogListResult = {
+  items: [
+    {
+      action: 'quantity.updated',
+      actionLabel: {
+        defaultMessage: 'Updated allocation quantity',
+        id: 'entitlement.activity.action.quantity.updated',
+        values: [],
+      },
+      actor: {
+        displayName: 'System Automation',
+        email: null,
+        type: 'system',
+      },
+      entitlementId: 'ent-insight-studio-2026-001',
+      eventTime: '2026-06-24T00:00:00Z',
+      id: 'activity-1',
+      productId: 'prod-insight-studio',
+      productName: 'Insight Studio',
+      quantityDelta: 1,
+      result: 'success',
+      summary: 'System Automation updated allocation quantity for Insight Studio.',
+      summaryMessage: {
+        defaultMessage: '{actorName} updated allocation quantity for {productName}.',
+        id: 'entitlement.activity.summary.quantity.updated',
+        values: [],
+      },
+      target: {
+        id: 'ent-insight-studio-2026-001',
+        name: 'LIC-INSIGHT-STUDIO-2026',
+        type: 'entitlement',
+      },
+    },
+  ],
+  totalElements: 1,
+};
 
-  return activityLogsPromise;
+const userAccessRows: UserAccessRow[] = [
+  {
+    allocatedAt: '2026-06-24T00:00:00Z',
+    department: 'Operations',
+    email: 'amelia.hart@example.com',
+    entitlementCode: 'LIC-INSIGHT-STUDIO-2026',
+    entitlementId: 'ent-insight-studio-2026-001',
+    id: 'user-amelia-hart',
+    isAllocated: true,
+    name: 'Amelia Hart',
+    productId: 'prod-insight-studio',
+    seatQuantity: 1,
+    status: 'active',
+  },
+];
+
+function mockJsonFetch(payload: unknown, status = 200) {
+  const fetchMock = vi.fn().mockResolvedValue(
+    new Response(JSON.stringify(payload), {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      status,
+    })
+  );
+
+  vi.stubGlobal('fetch', fetchMock);
+
+  return fetchMock;
 }
 
-describe('listActivityLogs', () => {
+function getFetchBody(fetchMock: ReturnType<typeof mockJsonFetch>) {
+  const init = fetchMock.mock.calls[0]?.[1] as RequestInit | undefined;
+
+  if (!init?.body || typeof init.body !== 'string') {
+    throw new Error('Expected fetch to receive a JSON request body.');
+  }
+
+  return JSON.parse(init.body) as Record<string, unknown>;
+}
+
+describe('entitlement service API', () => {
   afterEach(() => {
-    vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
-  it('returns the synthetic activity log dataset without pagination', async () => {
-    const activityLogs = await resolveActivityLogs();
-
-    expect(activityLogs.totalElements).toBeGreaterThan(1000);
-    expect(activityLogs.items).toHaveLength(activityLogs.totalElements);
-  });
-
-  it('filters product-local activity records', async () => {
-    const activityLogs = await resolveActivityLogs({ productId: 'prod-workflow-hub' });
-
-    expect(activityLogs.totalElements).toBeGreaterThan(0);
-    expect(activityLogs.items.every((entry) => entry.productId === 'prod-workflow-hub')).toBe(true);
-  });
-
-  it('searches activity records in the mock API layer', async () => {
-    const activityLogs = await resolveActivityLogs({ searchString: 'Amelia Hart' });
-
-    expect(activityLogs.totalElements).toBeGreaterThan(0);
-    expect(
-      activityLogs.items.every((entry) =>
-        [entry.actor.displayName, entry.target.name, entry.summary, entry.productName].some(
-          (value) => value.toLowerCase().includes('amelia hart')
-        )
-      )
-    ).toBe(true);
-  });
-
-  it('sorts activity records in the mock API layer', async () => {
-    const activityLogs = await resolveActivityLogs({
-      sortDirection: 'asc',
-      sortField: 'actor',
+  it('loads products through the entitlement GraphQL endpoint with the demo organization', async () => {
+    const fetchMock = mockJsonFetch({
+      data: {
+        products: [product],
+      },
     });
-    const actorNames = activityLogs.items.map((entry) => entry.actor.displayName.toLowerCase());
-    const sortedActorNames = [...actorNames].sort((first, second) => first.localeCompare(second));
 
-    expect(actorNames).toEqual(sortedActorNames);
-  });
-});
+    await expect(listProducts()).resolves.toEqual([product]);
 
-describe('listActivityLog', () => {
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('keeps the product-scoped query available for product detail views', async () => {
-    vi.useFakeTimers();
-    const activityLogPromise = listActivityLog('prod-insight-studio');
-
-    await vi.runAllTimersAsync();
-
-    const activityLog = await activityLogPromise;
-
-    expect(activityLog.length).toBeGreaterThan(0);
-    expect(activityLog.every((entry) => entry.productId === 'prod-insight-studio')).toBe(true);
-  });
-});
-
-describe('listAllocatedUsers', () => {
-  afterEach(() => {
-    resetMockEntitlementApiState();
-  });
-
-  it('returns product-scoped allocated users with seat usage tied to the product summary', async () => {
-    const allocatedUsers = await listAllocatedUsers('prod-insight-studio');
-    const entitlementSummary = await getProductEntitlementSummary('prod-insight-studio');
-    const usedSeats = allocatedUsers.reduce((total, user) => total + user.seatQuantity, 0);
-
-    expect(allocatedUsers).toHaveLength(34);
-    expect(allocatedUsers.every((user) => user.productId === 'prod-insight-studio')).toBe(true);
-    expect(usedSeats).toBe(entitlementSummary.allocatedQuantity);
-    expect(entitlementSummary.availableQuantity).toBe(
-      entitlementSummary.purchasedQuantity - usedSeats
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:4317/graphql',
+      expect.objectContaining({
+        method: 'POST',
+      })
     );
+    expect(getFetchBody(fetchMock)).toMatchObject({
+      variables: {
+        organizationId: 'org-demo-001',
+      },
+    });
   });
 
-  it('keeps allocated user seat totals aligned with each entitlement pool', async () => {
-    const entitlements = await listEntitlements();
-
-    for (const entitlement of entitlements) {
-      const allocatedUsers = await listAllocatedUsers(entitlement.productId);
-      const allocatedSeats = allocatedUsers
-        .filter((user) => user.entitlementId === entitlement.id)
-        .reduce((total, user) => total + user.seatQuantity, 0);
-
-      expect(allocatedSeats).toBe(entitlement.allocatedQuantity);
-    }
-  });
-});
-
-describe('listProductUserAccess', () => {
-  afterEach(() => {
-    resetMockEntitlementApiState();
-  });
-
-  it('marks the initially used seats as selected user access rows', async () => {
-    const userAccessRows = await listProductUserAccess('prod-insight-studio');
-    const allocatedRows = userAccessRows.filter((row) => row.isAllocated);
-
-    expect(userAccessRows.length).toBeGreaterThan(allocatedRows.length);
-    expect(allocatedRows).toHaveLength(34);
-    expect(allocatedRows.reduce((total, row) => total + row.seatQuantity, 0)).toBe(34);
-  });
-
-  it('persists submitted user allocation changes in mock API memory', async () => {
-    const initialRows = await listProductUserAccess('prod-insight-studio');
-    const initialAllocatedRowIds = initialRows
-      .filter((row) => row.isAllocated)
-      .map((row) => row.id);
-    const userToAllocate = initialRows.find((row) => !row.isAllocated);
-
-    if (!userToAllocate) {
-      throw new Error('Expected at least one unallocated user access row.');
-    }
-
-    await updateProductUserAllocations({
-      productId: 'prod-insight-studio',
-      selectedUserIds: [...initialAllocatedRowIds, userToAllocate.id],
+  it('sends Activity Log pagination, sorting, search, and organization through GraphQL', async () => {
+    const fetchMock = mockJsonFetch({
+      data: {
+        activityLogs,
+      },
     });
 
-    const entitlementSummary = await getProductEntitlementSummary('prod-insight-studio');
-    const allocatedUsers = await listAllocatedUsers('prod-insight-studio');
-    const updatedRows = await listProductUserAccess('prod-insight-studio');
-    const updatedUser = updatedRows.find((row) => row.id === userToAllocate.id);
+    await expect(
+      listActivityLogs({
+        pageNumber: 2,
+        pageSize: 100,
+        productId: 'prod-insight-studio',
+        searchString: '  Amelia  ',
+        sortDirection: 'asc',
+        sortField: 'actor',
+      })
+    ).resolves.toEqual(activityLogs);
 
-    expect(entitlementSummary.allocatedQuantity).toBe(35);
-    expect(entitlementSummary.availableQuantity).toBe(55);
-    expect(allocatedUsers).toHaveLength(35);
-    expect(updatedUser?.isAllocated).toBe(true);
+    expect(getFetchBody(fetchMock)).toMatchObject({
+      variables: {
+        input: {
+          organizationId: 'org-demo-001',
+          pageNumber: 2,
+          pageSize: 100,
+          productId: 'prod-insight-studio',
+          searchString: 'Amelia',
+          sortDirection: 'asc',
+          sortField: 'actor',
+        },
+      },
+    });
+  });
+
+  it('updates manual allocation selections through the entitlement REST command endpoint', async () => {
+    const fetchMock = mockJsonFetch(userAccessRows);
+
+    await expect(
+      updateProductUserAllocations({
+        productId: 'prod-insight-studio',
+        selectedUserIds: ['user-amelia-hart', 'user-amelia-hart', 'user-noah-kim'],
+      })
+    ).resolves.toEqual(userAccessRows);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:4317/organizations/org-demo-001/products/prod-insight-studio/allocations',
+      expect.objectContaining({
+        method: 'PUT',
+      })
+    );
+    expect(getFetchBody(fetchMock)).toEqual({
+      selectedUserIds: ['user-amelia-hart', 'user-noah-kim'],
+    });
+  });
+
+  it('surfaces backend validation messages from REST command failures', async () => {
+    mockJsonFetch(
+      {
+        error: 'SEAT_LIMIT_EXCEEDED',
+        message: 'Selected users exceed available seats for LIC-INSIGHT-STUDIO-2026.',
+      },
+      400
+    );
+
+    await expect(
+      updateProductUserAllocations({
+        productId: 'prod-insight-studio',
+        selectedUserIds: ['user-amelia-hart'],
+      })
+    ).rejects.toThrow('Selected users exceed available seats for LIC-INSIGHT-STUDIO-2026.');
+  });
+
+  it('surfaces GraphQL errors from read model failures', async () => {
+    mockJsonFetch({
+      data: null,
+      errors: [
+        {
+          message: 'Product prod-missing was not found.',
+        },
+      ],
+    });
+
+    await expect(listProducts()).rejects.toThrow('Product prod-missing was not found.');
   });
 });

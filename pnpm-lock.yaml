@@ -12,7 +12,7 @@ importers:
         specifier: 5.2.10
         version: 5.2.10
       '@hugo-ui/shadcn-vue':
-        specifier: link:hugo-ui/packages/shadcn-vue
+        specifier: 0.2.0
         version: link:hugo-ui/packages/shadcn-vue
       '@tanstack/vue-query':
         specifier: ^5.90.12

@@ -1,4 +1,4 @@
-export type EntitlementStatus = 'active' | 'expired' | 'scheduled' | 'revoked';
+export type EntitlementStatus = 'active' | 'expired' | 'scheduled' | 'revoked' | (string & {});
 
 export interface Entitlement {
   id: string;
@@ -10,5 +10,5 @@ export interface Entitlement {
   status: EntitlementStatus;
   startDate: string;
   endDate: string;
-  source: 'contract' | 'trial' | 'scheduled';
+  source: 'contract' | 'trial' | 'scheduled' | (string & {});
 }

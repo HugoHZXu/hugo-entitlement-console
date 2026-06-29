@@ -1,9 +1,11 @@
 import { computed, type MaybeRefOrGetter, toValue } from 'vue';
-import { useQuery } from '@tanstack/vue-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/vue-query';
 
-import { listActivityLog, listActivityLogs } from '@/shared/api';
+import { listActivityLogs } from '@/shared/api';
 import { queryKeys } from '@/shared/config/query-keys';
-import type { ActivityLogListInput } from '@/shared/types';
+import type { ActivityLogListInput, ActivityLogListResult } from '@/shared/types';
+
+const PRODUCT_ACTIVITY_LOG_PAGE_SIZE = 50;
 
 export function useActivityLogsQuery(input: MaybeRefOrGetter<ActivityLogListInput>) {
   return useQuery({
@@ -12,9 +14,22 @@ export function useActivityLogsQuery(input: MaybeRefOrGetter<ActivityLogListInpu
   });
 }
 
-export function useActivityLogQuery(productId: MaybeRefOrGetter<string>) {
-  return useQuery({
-    queryKey: computed(() => queryKeys.activityLog(toValue(productId))),
-    queryFn: () => listActivityLog(toValue(productId)),
+export function useProductActivityLogInfiniteQuery(productId: MaybeRefOrGetter<string>) {
+  return useInfiniteQuery({
+    getNextPageParam: (lastPage: ActivityLogListResult, allPages: ActivityLogListResult[]) => {
+      const loadedCount = allPages.reduce((total, page) => total + page.items.length, 0);
+
+      return loadedCount < lastPage.totalElements ? allPages.length : undefined;
+    },
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      listActivityLogs({
+        pageNumber: Number(pageParam),
+        pageSize: PRODUCT_ACTIVITY_LOG_PAGE_SIZE,
+        productId: toValue(productId),
+        sortDirection: 'desc',
+        sortField: 'eventTime',
+      }),
+    queryKey: computed(() => queryKeys.productActivityLogs(toValue(productId))),
   });
 }

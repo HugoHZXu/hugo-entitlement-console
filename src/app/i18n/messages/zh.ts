@@ -16,6 +16,7 @@ const zhMessages = {
       revoked: '已撤销',
       scheduled: '已计划',
       success: '成功',
+      unknown: '未知',
     },
   },
   pages: {
@@ -26,7 +27,7 @@ const zhMessages = {
       searchAriaLabel: '搜索活动日志',
       searchPlaceholder: '搜索活动日志',
       title: '活动日志',
-      titleInfo: '通过 mock API 层加载的合成授权活动记录。',
+      titleInfo: '从本地 portfolio 服务加载的授权活动记录。',
     },
     allocatedUsers: {
       actions: {

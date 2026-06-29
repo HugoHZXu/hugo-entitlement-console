@@ -1,16 +1,20 @@
-export type ProductStatus = 'active' | 'scheduled' | 'retired';
-export type ProductIconName = 'insight-studio' | 'workflow-hub' | 'access-monitor';
+export type ProductStatus = 'active' | 'scheduled' | 'retired' | (string & {});
+export type ProductIconName =
+  | 'insight-studio'
+  | 'workflow-hub'
+  | 'access-monitor'
+  | (string & {});
 
 export interface UsageDimension {
   code: string;
   name: string;
   description: string;
-  unit: 'seat' | 'device' | 'credit';
+  unit: 'seat' | 'device' | 'credit' | (string & {});
 }
 
 export interface ProductEntitlementInfo {
   entitlementCode: string;
-  grantType: 'Contract license' | 'Trial license' | 'Scheduled license';
+  grantType: 'Contract license' | 'Trial license' | 'Scheduled license' | (string & {});
   allocationModel: string;
   subscriberId: string;
   subscriberAccountId: string;

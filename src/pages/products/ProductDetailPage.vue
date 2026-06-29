@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { RouterLink, useRouter } from 'vue-router';
 
 import { useProductActivityLogColumns } from '@/features/activity-log/activity-display';
-import { useActivityLogQuery } from '@/features/activity-log/composables/useActivityLogQuery';
+import { useProductActivityLogInfiniteQuery } from '@/features/activity-log/composables/useActivityLogQuery';
 import { useProductEntitlementSummaryQuery } from '@/features/entitlements/composables/useEntitlementsQuery';
 import {
   productDetailGridClass,
@@ -46,12 +46,17 @@ const { data: entitlementSummary } = useProductEntitlementSummaryQuery(
   computed(() => props.productId)
 );
 const {
-  data: activityLog,
-  isFetching: isActivityLogFetching,
+  data: activityLogPages,
+  fetchNextPage: fetchNextActivityLogPage,
+  hasNextPage: hasNextActivityLogPage,
+  isFetchingNextPage: isActivityLogFetchingNextPage,
   isLoading: isActivityLogLoading,
-} = useActivityLogQuery(computed(() => props.productId));
+} = useProductActivityLogInfiniteQuery(computed(() => props.productId));
 const productIcon = computed(() =>
   product.value ? getProductIcon(product.value.icon) : undefined
+);
+const activityLogRows = computed(
+  () => activityLogPages.value?.pages.flatMap((page) => page.items) ?? []
 );
 const activityLogColumns = useProductActivityLogColumns();
 const {
@@ -69,6 +74,12 @@ function goBackToProducts() {
 
 function getActivityLogRowId(row: ActivityLogEntry) {
   return row.id;
+}
+
+function handleActivityLogEndReached() {
+  if (hasNextActivityLogPage.value && !isActivityLogFetchingNextPage.value) {
+    void fetchNextActivityLogPage();
+  }
 }
 </script>
 
@@ -208,11 +219,15 @@ function getActivityLogRowId(row: ActivityLogEntry) {
           :columns="activityLogColumns"
           :empty="t('pages.productDetail.activityEmpty')"
           :get-row-id="getActivityLogRowId"
+          :has-more="hasNextActivityLogPage"
           :height="360"
-          :loading="isActivityLogLoading || isActivityLogFetching"
+          :loading="isActivityLogLoading"
+          :loading-more="isActivityLogFetchingNextPage"
           :overscan="8"
           :row-height="56"
-          :rows="activityLog ?? []"
+          :rows="activityLogRows"
+          virtualized
+          @end-reached="handleActivityLogEndReached"
         />
       </ContentTemplate>
     </div>

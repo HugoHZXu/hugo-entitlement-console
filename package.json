@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@fontsource/noto-sans": "5.2.10",
-    "@hugo-ui/shadcn-vue": "0.1.0",
+    "@hugo-ui/shadcn-vue": "0.2.0",
     "@tanstack/vue-query": "^5.90.12",
     "@tanstack/vue-table": "8.21.3",
     "class-variance-authority": "^0.7.1",

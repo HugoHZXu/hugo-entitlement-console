@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { ContentTemplate, DataGrid, Input, type DataGridSort } from '@hugo-ui/shadcn-vue';
+import {
+  ContentTemplate,
+  DataGrid,
+  Input,
+  type DataGridPagination,
+  type DataGridSort,
+} from '@hugo-ui/shadcn-vue';
 import { Search } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
@@ -13,11 +19,14 @@ import {
 } from '@/features/activity-log/activity-log.styles';
 import { useActivityLogColumns } from '@/features/activity-log/activity-display';
 import { useActivityLogsQuery } from '@/features/activity-log/composables/useActivityLogQuery';
-import { useActivityLogFilterStore } from '@/features/activity-log/stores/activity-log-filter-store';
+import {
+  ACTIVITY_LOG_PAGE_SIZE_OPTIONS,
+  useActivityLogFilterStore,
+} from '@/features/activity-log/stores/activity-log-filter-store';
 import type { ActivityLogEntry } from '@/shared/types';
 
 const activityLogFilterStore = useActivityLogFilterStore();
-const { queryInput, sort } = storeToRefs(activityLogFilterStore);
+const { pageNumber, pageSize, queryInput, sort } = storeToRefs(activityLogFilterStore);
 const columns = useActivityLogColumns();
 const { t } = useI18n();
 
@@ -30,6 +39,12 @@ const { data: activityLogs, isFetching, isLoading } = useActivityLogsQuery(query
 
 const rows = computed(() => activityLogs.value?.items ?? []);
 const totalElements = computed(() => activityLogs.value?.totalElements ?? 0);
+const pagination = computed<DataGridPagination>(() => ({
+  page: pageNumber.value,
+  pageSize: pageSize.value,
+  pageSizeOptions: [...ACTIVITY_LOG_PAGE_SIZE_OPTIONS],
+  total: totalElements.value,
+}));
 
 function getActivityLogRowId(row: ActivityLogEntry) {
   return row.id;
@@ -37,6 +52,14 @@ function getActivityLogRowId(row: ActivityLogEntry) {
 
 function handleSortChange(nextSort: DataGridSort) {
   activityLogFilterStore.setSort(nextSort);
+}
+
+function handlePageChange(nextPage: number) {
+  activityLogFilterStore.setPageNumber(nextPage);
+}
+
+function handlePageSizeChange(nextPageSize: number) {
+  activityLogFilterStore.setPageSize(nextPageSize);
 }
 </script>
 
@@ -74,9 +97,12 @@ function handleSortChange(nextSort: DataGridSort) {
         :height="620"
         :loading="isLoading || isFetching"
         :overscan="10"
+        :pagination="pagination"
         :row-height="56"
         :rows="rows"
         :sort="sort"
+        @page-change="handlePageChange"
+        @page-size-change="handlePageSizeChange"
         @sort-change="handleSortChange"
       />
     </div>

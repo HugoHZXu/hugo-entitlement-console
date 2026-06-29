@@ -1,4 +1,4 @@
-export type ActivityLogStatus = 'success' | 'failed' | 'pending';
+export type ActivityLogStatus = 'success' | 'failed' | 'pending' | (string & {});
 
 export type ActivityLogKnownAction =
   | 'entitlement.created'
@@ -66,10 +66,13 @@ export interface ActivityLogEntry {
 }
 
 export interface ActivityLogListInput {
-  productId?: string;
-  sortField?: ActivityLogSortField;
-  sortDirection?: ActivityLogSortDirection;
-  searchString?: string;
+  organizationId?: string | null;
+  productId?: string | null;
+  sortField?: ActivityLogSortField | null;
+  sortDirection?: ActivityLogSortDirection | null;
+  searchString?: string | null;
+  pageNumber?: number | null;
+  pageSize?: number | null;
 }
 
 export interface ActivityLogListResult {

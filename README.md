@@ -4,14 +4,14 @@ This is a portfolio app for B2B product entitlement management.
 
 This repository contains a desensitized admin console for product entitlement management. Products are the primary navigation surface; allocated users, available quantity, usage dimensions, and Activity Log views are presented around the product workflow.
 
-The app uses synthetic mock data only and does not connect to a real backend.
+The app connects to a local desensitized `entitlement-service` backend for portfolio development. The service data remains synthetic and scoped to the demo organization.
 
 ## Feature Highlights
 
 - Product catalog with status, provider, and entitlement metadata.
 - Product detail workflow with entitlement summary and seat availability.
 - Allocated user management with search, draft selection, and capacity validation.
-- Activity Log views backed by normalized synthetic audit events.
+- Activity Log views backed by the local entitlement service.
 - English and Chinese locale support through `vue-i18n`.
 
 ## Screenshots
@@ -65,6 +65,14 @@ pnpm install
 pnpm run dev
 ```
 
+Local entitlement service defaults:
+
+```bash
+VITE_ENTITLEMENT_GRAPHQL_URL=http://127.0.0.1:4317/graphql
+VITE_ENTITLEMENT_REST_URL=http://127.0.0.1:4317
+VITE_DEMO_ORGANIZATION_ID=org-demo-001
+```
+
 Common validation commands:
 
 ```bash
@@ -95,7 +103,7 @@ pnpm run verify:hugo-ui
 - `src/layouts`: application shell layout.
 - `src/pages`: route-level product, allocated user, and Activity Log pages.
 - `src/features`: feature-local UI composition, display helpers, composables, stores, and styles.
-- `src/shared/api`: mock API functions and normalization logic.
+- `src/shared/api`: entitlement service GraphQL and REST API facade.
 - `src/shared/mocks`: synthetic product, entitlement, allocated user, and Activity Log data.
 - `src/shared/types`: shared business view models.
 
@@ -104,8 +112,9 @@ pnpm run verify:hugo-ui
 This is a desensitized portfolio project. It preserves reusable SaaS administration patterns without including private implementation details.
 
 - All product, entitlement, user, and audit data is synthetic.
-- The app does not include real customer records, endpoints, access tokens, production logs, or private screenshots.
-- Entitlement records exist as product-detail mock data; they are not modeled as an independent product area in this app.
+- The app does not include real customer records, production endpoints, access tokens, production logs, or private screenshots.
+- Local service endpoints point to `127.0.0.1` and are intended for portfolio development only.
+- Entitlement records exist as product-detail data; they are not modeled as an independent product area in this app.
 - Hugo UI is an external design system dependency, not a component library owned by this repository.
 
 ## License

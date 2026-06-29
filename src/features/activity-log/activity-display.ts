@@ -6,16 +6,20 @@ import { formatDateTime, normalizeAppLocale } from '@/app/i18n';
 import type { ActivityLogEntry, ActivityLogStatus, LocalizedMessage } from '@/shared/types';
 
 export function formatActivityStatus(status: ActivityLogStatus): string {
-  const labels: Record<ActivityLogStatus, string> = {
+  const labels: Record<'failed' | 'pending' | 'success', string> = {
     failed: 'Failed',
     pending: 'Pending',
     success: 'Success',
   };
 
-  return labels[status];
+  return labels[status as keyof typeof labels] ?? status;
 }
 
 export function getActivityStatusMessageKey(status: ActivityLogStatus): string {
+  if (status !== 'success' && status !== 'failed' && status !== 'pending') {
+    return 'common.status.unknown';
+  }
+
   return `entitlementConsole.activity.result.${status}`;
 }
 
@@ -28,7 +32,11 @@ export function getActivityStatusTone(status: ActivityLogStatus): BadgeTone {
     return 'danger';
   }
 
-  return 'warning';
+  if (status === 'pending') {
+    return 'warning';
+  }
+
+  return 'neutral';
 }
 
 export function formatActivityDateTime(value: string, locale: string | undefined): string {

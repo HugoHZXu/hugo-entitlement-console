@@ -1,292 +1,463 @@
 import {
-  mockActivityLogEntries,
-  mockAllocatedUsers,
-  mockEntitlements,
-  mockProducts,
-  mockUserAccessCandidates,
-} from '@/shared/mocks';
+  getDemoOrganizationId,
+  getEntitlementGraphqlUrl,
+  getEntitlementRestUrl,
+} from '@/shared/config/entitlement-service';
 import type {
-  ActivityLogEntry,
   ActivityLogListInput,
   ActivityLogListResult,
-  ActivityLogSortField,
+  ActivityLogEntry,
   AllocatedUser,
   Entitlement,
   Product,
   ProductEntitlementSummary,
   UpdateProductUserAllocationsInput,
-  UserAccessCandidate,
   UserAccessRow,
 } from '@/shared/types';
-import { normalizeActivityLogEntries } from './activity-log-normalizer';
 
-const ACTIVITY_LOG_DELAY_MS = 180;
-const MOCK_ALLOCATION_SUBMITTED_AT = '2026-06-24T00:00:00Z';
+type GraphqlError = {
+  message?: string;
+};
 
-const resolveAsync = async <T>(value: T, delayMs = 0): Promise<T> =>
-  new Promise((resolve) => {
-    globalThis.setTimeout(() => resolve(value), delayMs);
-  });
+type GraphqlResponse<TData> = {
+  data?: TData | null;
+  errors?: GraphqlError[];
+};
 
-const normalizedActivityLogEntries = normalizeActivityLogEntries(
-  mockActivityLogEntries,
-  mockProducts
-);
-let currentAllocatedUsers = [...mockAllocatedUsers];
-
-function getAllocatedQuantity(entitlementId: string): number {
-  return currentAllocatedUsers
-    .filter((user) => user.entitlementId === entitlementId)
-    .reduce((total, user) => total + user.seatQuantity, 0);
-}
-
-function getEntitlementWithCurrentAllocation(entitlement: Entitlement): Entitlement {
-  return {
-    ...entitlement,
-    allocatedQuantity: getAllocatedQuantity(entitlement.id),
-  };
-}
-
-function listCurrentEntitlements(): Entitlement[] {
-  return mockEntitlements.map(getEntitlementWithCurrentAllocation);
-}
-
-function getProductUserAccessCandidates(productId: string): UserAccessCandidate[] {
-  return mockUserAccessCandidates.filter((user) => user.productId === productId);
-}
-
-function getEntitlementById(entitlementId: string): Entitlement | undefined {
-  return mockEntitlements.find((entitlement) => entitlement.id === entitlementId);
-}
-
-function toUserAccessRow(candidate: UserAccessCandidate): UserAccessRow {
-  const allocatedUser = currentAllocatedUsers.find(
-    (user) => user.productId === candidate.productId && user.id === candidate.id
-  );
-
-  return {
-    ...candidate,
-    entitlementCode: getEntitlementById(candidate.entitlementId)?.entitlementCode ?? 'n/a',
-    isAllocated: Boolean(allocatedUser),
-    allocatedAt: allocatedUser?.allocatedAt ?? null,
-  };
-}
-
-function createAllocatedUser(
-  candidate: UserAccessCandidate,
-  previousAllocatedUser: AllocatedUser | undefined
-): AllocatedUser {
-  return {
-    ...candidate,
-    allocatedAt: previousAllocatedUser?.allocatedAt ?? MOCK_ALLOCATION_SUBMITTED_AT,
-  };
-}
-
-function assertSelectedUsersBelongToProduct(
-  productId: string,
-  selectedUserIds: string[],
-  candidatesById: Map<string, UserAccessCandidate>
-) {
-  const unknownUserId = selectedUserIds.find((userId) => !candidatesById.has(userId));
-
-  if (unknownUserId) {
-    throw new Error(`User ${unknownUserId} is not assignable to product ${productId}.`);
+const PRODUCT_FIELDS = `
+  id
+  icon
+  name
+  provider
+  description
+  status
+  supportedPlatforms
+  usageDimensions {
+    code
+    name
+    description
+    unit
   }
+  entitlementInfo {
+    entitlementCode
+    grantType
+    allocationModel
+    subscriberId
+    subscriberAccountId
+    renewalDate
+  }
+`;
+
+const ENTITLEMENT_FIELDS = `
+  id
+  productId
+  entitlementCode
+  usageDimensionCode
+  purchasedQuantity
+  allocatedQuantity
+  status
+  startDate
+  endDate
+  source
+`;
+
+const PRODUCT_ENTITLEMENT_SUMMARY_FIELDS = `
+  productId
+  purchasedQuantity
+  allocatedQuantity
+  availableQuantity
+`;
+
+const ALLOCATED_USER_FIELDS = `
+  id
+  productId
+  entitlementId
+  seatQuantity
+  name
+  email
+  department
+  status
+  allocatedAt
+  sourceJobId
+`;
+
+const USER_ACCESS_ROW_FIELDS = `
+  id
+  productId
+  entitlementId
+  entitlementCode
+  seatQuantity
+  name
+  email
+  department
+  status
+  isAllocated
+  allocatedAt
+`;
+
+const LOCALIZED_MESSAGE_FIELDS = `
+  id
+  defaultMessage
+  values {
+    key
+    value
+  }
+`;
+
+const ACTIVITY_LOG_ENTRY_FIELDS = `
+  id
+  productId
+  productName
+  entitlementId
+  actor {
+    type
+    displayName
+    email
+  }
+  target {
+    type
+    id
+    name
+  }
+  action
+  actionLabel {
+    ${LOCALIZED_MESSAGE_FIELDS}
+  }
+  summary
+  summaryMessage {
+    ${LOCALIZED_MESSAGE_FIELDS}
+  }
+  quantityDelta
+  result
+  eventTime
+`;
+
+function normalizeMessage(message: unknown): string | undefined {
+  if (typeof message === 'string') {
+    return message;
+  }
+
+  if (Array.isArray(message)) {
+    const items = message.filter((item): item is string => typeof item === 'string');
+
+    return items.length > 0 ? items.join(', ') : undefined;
+  }
+
+  return undefined;
 }
 
-function assertEntitlementCapacity(selectedCandidates: UserAccessCandidate[]) {
-  for (const entitlement of mockEntitlements) {
-    const selectedQuantity = selectedCandidates
-      .filter((candidate) => candidate.entitlementId === entitlement.id)
-      .reduce((total, candidate) => total + candidate.seatQuantity, 0);
+function getErrorMessage(payload: unknown, fallback: string): string {
+  if (payload && typeof payload === 'object') {
+    const message = normalizeMessage((payload as { message?: unknown }).message);
 
-    if (selectedQuantity > entitlement.purchasedQuantity) {
-      throw new Error(`Selected users exceed available seats for ${entitlement.entitlementCode}.`);
+    if (message) {
+      return message;
+    }
+
+    const error = normalizeMessage((payload as { error?: unknown }).error);
+
+    if (error) {
+      return error;
     }
   }
+
+  return fallback;
+}
+
+async function readJsonResponse(response: Response): Promise<unknown> {
+  const text = await response.text();
+
+  if (!text.trim()) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
+  }
+}
+
+async function requestGraphql<TData, TVariables extends Record<string, unknown>>(
+  query: string,
+  variables: TVariables
+): Promise<TData> {
+  const response = await fetch(getEntitlementGraphqlUrl(), {
+    body: JSON.stringify({
+      query,
+      variables,
+    }),
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
+  });
+  const payload = (await readJsonResponse(response)) as GraphqlResponse<TData> | unknown;
+
+  if (!response.ok) {
+    throw new Error(getErrorMessage(payload, `GraphQL request failed with ${response.status}.`));
+  }
+
+  if (payload && typeof payload === 'object') {
+    const graphqlPayload = payload as GraphqlResponse<TData>;
+
+    if (graphqlPayload.errors?.length) {
+      throw new Error(
+        graphqlPayload.errors
+          .map((error) => error.message)
+          .filter((message): message is string => Boolean(message))
+          .join('; ') || 'GraphQL request failed.'
+      );
+    }
+
+    if (graphqlPayload.data) {
+      return graphqlPayload.data;
+    }
+  }
+
+  throw new Error('GraphQL response did not include data.');
+}
+
+async function requestRest<TData>(path: string, init: RequestInit): Promise<TData> {
+  const response = await fetch(new URL(path, getEntitlementRestUrl()).toString(), {
+    ...init,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      ...init.headers,
+    },
+  });
+  const payload = await readJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(getErrorMessage(payload, `REST request failed with ${response.status}.`));
+  }
+
+  return payload as TData;
+}
+
+function getOrganizationId(organizationId?: string | null): string {
+  return organizationId ?? getDemoOrganizationId();
+}
+
+function createActivityLogInput(input: ActivityLogListInput = {}): ActivityLogListInput {
+  const queryInput: ActivityLogListInput = {
+    organizationId: getOrganizationId(input.organizationId),
+  };
+  const searchString = input.searchString?.trim();
+
+  if (input.productId) {
+    queryInput.productId = input.productId;
+  }
+
+  if (input.sortField) {
+    queryInput.sortField = input.sortField;
+  }
+
+  if (input.sortDirection) {
+    queryInput.sortDirection = input.sortDirection;
+  }
+
+  if (searchString) {
+    queryInput.searchString = searchString;
+  }
+
+  if (input.pageNumber !== undefined && input.pageNumber !== null) {
+    queryInput.pageNumber = input.pageNumber;
+  }
+
+  if (input.pageSize !== undefined && input.pageSize !== null) {
+    queryInput.pageSize = input.pageSize;
+  }
+
+  return queryInput;
 }
 
 export async function listProducts(): Promise<Product[]> {
-  return resolveAsync(mockProducts);
+  const data = await requestGraphql<{ products: Product[] }, { organizationId: string }>(
+    `
+      query EntitlementProducts($organizationId: ID!) {
+        products(organizationId: $organizationId) {
+          ${PRODUCT_FIELDS}
+        }
+      }
+    `,
+    {
+      organizationId: getDemoOrganizationId(),
+    }
+  );
+
+  return data.products;
 }
 
 export async function getProduct(productId: string): Promise<Product | undefined> {
-  return resolveAsync(mockProducts.find((product) => product.id === productId));
+  const data = await requestGraphql<
+    { product: Product | null },
+    { organizationId: string; productId: string }
+  >(
+    `
+      query EntitlementProduct($productId: ID!, $organizationId: ID!) {
+        product(id: $productId, organizationId: $organizationId) {
+          ${PRODUCT_FIELDS}
+        }
+      }
+    `,
+    {
+      organizationId: getDemoOrganizationId(),
+      productId,
+    }
+  );
+
+  return data.product ?? undefined;
 }
 
 export async function listEntitlements(): Promise<Entitlement[]> {
-  return resolveAsync(listCurrentEntitlements());
+  const products = await listProducts();
+  const entitlements = await Promise.all(
+    products.map((product) => listEntitlementsByProduct(product.id))
+  );
+
+  return entitlements.flat();
 }
 
 export async function listEntitlementsByProduct(productId: string): Promise<Entitlement[]> {
-  return resolveAsync(
-    listCurrentEntitlements().filter((entitlement) => entitlement.productId === productId)
+  const data = await requestGraphql<
+    { entitlements: Entitlement[] },
+    { organizationId: string; productId: string }
+  >(
+    `
+      query EntitlementProductEntitlements($productId: ID!, $organizationId: ID!) {
+        entitlements(productId: $productId, organizationId: $organizationId) {
+          ${ENTITLEMENT_FIELDS}
+        }
+      }
+    `,
+    {
+      organizationId: getDemoOrganizationId(),
+      productId,
+    }
   );
+
+  return data.entitlements;
 }
 
 export async function getProductEntitlementSummary(
   productId: string
 ): Promise<ProductEntitlementSummary> {
-  const entitlements = listCurrentEntitlements().filter(
-    (entitlement) => entitlement.productId === productId
-  );
-  const purchasedQuantity = entitlements.reduce(
-    (total, entitlement) => total + entitlement.purchasedQuantity,
-    0
-  );
-  const allocatedQuantity = entitlements.reduce(
-    (total, entitlement) => total + entitlement.allocatedQuantity,
-    0
+  const data = await requestGraphql<
+    { productEntitlementSummary: ProductEntitlementSummary },
+    { organizationId: string; productId: string }
+  >(
+    `
+      query EntitlementProductSummary($productId: ID!, $organizationId: ID!) {
+        productEntitlementSummary(productId: $productId, organizationId: $organizationId) {
+          ${PRODUCT_ENTITLEMENT_SUMMARY_FIELDS}
+        }
+      }
+    `,
+    {
+      organizationId: getDemoOrganizationId(),
+      productId,
+    }
   );
 
-  return resolveAsync({
-    productId,
-    purchasedQuantity,
-    allocatedQuantity,
-    availableQuantity: purchasedQuantity - allocatedQuantity,
-  });
+  return data.productEntitlementSummary;
 }
 
 export async function listAllocatedUsers(productId: string): Promise<AllocatedUser[]> {
-  return resolveAsync(currentAllocatedUsers.filter((user) => user.productId === productId));
+  const data = await requestGraphql<
+    { allocatedUsers: AllocatedUser[] },
+    { organizationId: string; productId: string }
+  >(
+    `
+      query EntitlementAllocatedUsers($productId: ID!, $organizationId: ID!) {
+        allocatedUsers(productId: $productId, organizationId: $organizationId) {
+          ${ALLOCATED_USER_FIELDS}
+        }
+      }
+    `,
+    {
+      organizationId: getDemoOrganizationId(),
+      productId,
+    }
+  );
+
+  return data.allocatedUsers;
 }
 
 export async function listProductUserAccess(productId: string): Promise<UserAccessRow[]> {
-  return resolveAsync(getProductUserAccessCandidates(productId).map(toUserAccessRow));
+  const data = await requestGraphql<
+    { productUserAccess: UserAccessRow[] },
+    { organizationId: string; productId: string }
+  >(
+    `
+      query EntitlementProductUserAccess($productId: ID!, $organizationId: ID!) {
+        productUserAccess(productId: $productId, organizationId: $organizationId) {
+          ${USER_ACCESS_ROW_FIELDS}
+        }
+      }
+    `,
+    {
+      organizationId: getDemoOrganizationId(),
+      productId,
+    }
+  );
+
+  return data.productUserAccess;
 }
 
 export async function updateProductUserAllocations({
+  organizationId,
   productId,
   selectedUserIds,
 }: UpdateProductUserAllocationsInput): Promise<UserAccessRow[]> {
-  const uniqueSelectedUserIds = Array.from(new Set(selectedUserIds));
-  const candidates = getProductUserAccessCandidates(productId);
-  const candidatesById = new Map(candidates.map((candidate) => [candidate.id, candidate]));
-  const previousAllocatedUsersById = new Map(
-    currentAllocatedUsers
-      .filter((user) => user.productId === productId)
-      .map((user) => [user.id, user])
-  );
+  const resolvedOrganizationId = getOrganizationId(organizationId);
+  const allocationPath = `/organizations/${encodeURIComponent(
+    resolvedOrganizationId
+  )}/products/${encodeURIComponent(productId)}/allocations`;
 
-  assertSelectedUsersBelongToProduct(productId, uniqueSelectedUserIds, candidatesById);
-
-  const selectedCandidates: UserAccessCandidate[] = [];
-
-  for (const userId of uniqueSelectedUserIds) {
-    const candidate = candidatesById.get(userId);
-
-    if (candidate) {
-      selectedCandidates.push(candidate);
-    }
-  }
-
-  const nextAllocatedUsers = selectedCandidates.map((candidate) =>
-    createAllocatedUser(candidate, previousAllocatedUsersById.get(candidate.id))
-  );
-
-  assertEntitlementCapacity(nextAllocatedUsers);
-
-  currentAllocatedUsers = [
-    ...currentAllocatedUsers.filter((user) => user.productId !== productId),
-    ...nextAllocatedUsers,
-  ];
-
-  return listProductUserAccess(productId);
-}
-
-export function resetMockEntitlementApiState() {
-  currentAllocatedUsers = [...mockAllocatedUsers];
-}
-
-function getActivityLogSortValue(entry: ActivityLogEntry, sortField: ActivityLogSortField): string {
-  if (sortField === 'actor') {
-    return entry.actor.displayName;
-  }
-
-  if (sortField === 'summary') {
-    return entry.summary;
-  }
-
-  if (sortField === 'product') {
-    return entry.productName;
-  }
-
-  if (sortField === 'result') {
-    return entry.result;
-  }
-
-  return entry.eventTime;
-}
-
-function sortActivityLogEntries(
-  entries: ActivityLogEntry[],
-  input: ActivityLogListInput
-): ActivityLogEntry[] {
-  const sortField = input.sortField ?? 'eventTime';
-  const sortDirection = input.sortDirection ?? 'desc';
-  const direction = sortDirection === 'asc' ? 1 : -1;
-
-  return [...entries].sort((first, second) => {
-    const firstValue = getActivityLogSortValue(first, sortField).toLowerCase();
-    const secondValue = getActivityLogSortValue(second, sortField).toLowerCase();
-
-    if (firstValue < secondValue) {
-      return -1 * direction;
-    }
-
-    if (firstValue > secondValue) {
-      return 1 * direction;
-    }
-
-    return second.eventTime.localeCompare(first.eventTime);
+  return requestRest<UserAccessRow[]>(allocationPath, {
+    body: JSON.stringify({
+      selectedUserIds: Array.from(new Set(selectedUserIds)),
+    }),
+    method: 'PUT',
   });
-}
-
-function matchesActivityLogSearch(entry: ActivityLogEntry, searchString: string): boolean {
-  const search = searchString.trim().toLowerCase();
-
-  if (!search) {
-    return true;
-  }
-
-  return [
-    entry.actor.displayName,
-    entry.actor.email ?? '',
-    entry.productName,
-    entry.target.name,
-    entry.action,
-    entry.actionLabel.defaultMessage,
-    entry.actionLabel.id,
-    entry.summary,
-    entry.summaryMessage.defaultMessage,
-    entry.summaryMessage.id,
-    entry.result,
-    entry.eventTime,
-  ].some((value) => value.toLowerCase().includes(search));
 }
 
 export async function listActivityLogs(
   input: ActivityLogListInput = {}
 ): Promise<ActivityLogListResult> {
-  const filteredEntries = normalizedActivityLogEntries.filter((entry) => {
-    if (input.productId && entry.productId !== input.productId) {
-      return false;
-    }
-
-    return matchesActivityLogSearch(entry, input.searchString ?? '');
-  });
-
-  return resolveAsync(
+  const data = await requestGraphql<
+    { activityLogs: ActivityLogListResult },
+    { input: ActivityLogListInput }
+  >(
+    `
+      query EntitlementActivityLogs($input: ActivityLogListInput) {
+        activityLogs(input: $input) {
+          totalElements
+          items {
+            ${ACTIVITY_LOG_ENTRY_FIELDS}
+          }
+        }
+      }
+    `,
     {
-      items: sortActivityLogEntries(filteredEntries, input),
-      totalElements: filteredEntries.length,
-    },
-    ACTIVITY_LOG_DELAY_MS
+      input: createActivityLogInput(input),
+    }
   );
+
+  return data.activityLogs;
 }
 
 export async function listActivityLog(productId: string): Promise<ActivityLogEntry[]> {
-  const activityLogs = await listActivityLogs({ productId });
+  const activityLogs = await listActivityLogs({
+    pageNumber: 0,
+    pageSize: 50,
+    productId,
+    sortDirection: 'desc',
+    sortField: 'eventTime',
+  });
 
   return activityLogs.items;
 }
