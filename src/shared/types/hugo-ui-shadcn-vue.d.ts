@@ -8,6 +8,14 @@ declare module '@hugo-ui/shadcn-vue' {
   export type InputStatus = 'default' | 'success' | 'error';
   export type InputSize = 'default' | 'sm';
   export type InputElement = 'input' | 'textarea';
+  export type SelectValue = string | number;
+  export type SelectSize = 'default' | 'sm';
+  export type SelectStatus = 'default' | 'success' | 'error';
+  export type SelectAlign = 'start' | 'center' | 'end';
+  export type SelectSide = 'top' | 'right' | 'bottom' | 'left';
+  export type DropdownMenuAlign = 'start' | 'center' | 'end';
+  export type DropdownMenuSide = 'top' | 'right' | 'bottom' | 'left';
+  export type ModalType = 'transactional' | 'destructive' | 'warning' | 'informational' | 'error';
 
   export type ButtonProps = {
     as?: string | Component;
@@ -82,6 +90,148 @@ declare module '@hugo-ui/shadcn-vue' {
     status?: InputStatus;
     type?: string;
     value?: string | number | null;
+  };
+
+  export type SelectOption = {
+    label: string | number | VNode;
+    value: SelectValue;
+    description?: string | number | VNode;
+    disabled?: boolean;
+    group?: string;
+  };
+
+  export type SelectClassNames = {
+    root?: HTMLAttributes['class'];
+    label?: HTMLAttributes['class'];
+    control?: HTMLAttributes['class'];
+    value?: HTMLAttributes['class'];
+    content?: HTMLAttributes['class'];
+    viewport?: HTMLAttributes['class'];
+    group?: HTMLAttributes['class'];
+    item?: HTMLAttributes['class'];
+    itemText?: HTMLAttributes['class'];
+    helper?: HTMLAttributes['class'];
+  };
+
+  export type SelectSlotAttributes = HTMLAttributes & Record<string, unknown>;
+
+  export type SelectSlotProps = {
+    content?: SelectSlotAttributes;
+    control?: SelectSlotAttributes;
+    portal?: SelectSlotAttributes;
+    root?: SelectSlotAttributes;
+  };
+
+  export type SelectProps = {
+    align?: SelectAlign;
+    alignOffset?: number;
+    class?: HTMLAttributes['class'];
+    classNames?: SelectClassNames;
+    defaultOpen?: boolean;
+    defaultValue?: SelectValue | null;
+    description?: string | number | VNode;
+    disabled?: boolean;
+    error?: string | number | VNode;
+    forceMount?: boolean;
+    id?: string;
+    label?: string | number | VNode;
+    message?: string | number | VNode;
+    modelValue?: SelectValue | null;
+    name?: string;
+    options: SelectOption[];
+    placeholder?: string;
+    required?: boolean;
+    side?: SelectSide;
+    sideOffset?: number;
+    size?: SelectSize;
+    slotProps?: SelectSlotProps;
+    status?: SelectStatus;
+  };
+
+  export type DropdownMenuClassNames = {
+    content?: HTMLAttributes['class'];
+    trigger?: HTMLAttributes['class'];
+  };
+
+  export type DropdownMenuSlotAttributes = HTMLAttributes & Record<string, unknown>;
+
+  export type DropdownMenuSlotProps = {
+    content?: DropdownMenuSlotAttributes;
+    portal?: DropdownMenuSlotAttributes;
+    trigger?: DropdownMenuSlotAttributes;
+  };
+
+  export type DropdownMenuProps = {
+    align?: DropdownMenuAlign;
+    alignOffset?: number;
+    class?: HTMLAttributes['class'];
+    classNames?: DropdownMenuClassNames;
+    defaultOpen?: boolean;
+    forceMount?: boolean;
+    modal?: boolean;
+    modelValue?: boolean;
+    open?: boolean;
+    side?: DropdownMenuSide;
+    sideOffset?: number;
+    slotProps?: DropdownMenuSlotProps;
+  };
+
+  export type DropdownMenuItemProps = {
+    as?: string | Component;
+    asChild?: boolean;
+    class?: HTMLAttributes['class'];
+    destructive?: boolean;
+    disabled?: boolean;
+    icon?: Component;
+    shortcut?: string | number | VNode;
+    textValue?: string;
+  };
+
+  export type DropdownMenuSeparatorProps = {
+    class?: HTMLAttributes['class'];
+  };
+
+  export type ModalButtonProps = {
+    autoFocus?: boolean;
+    children?: string | number | VNode;
+    disabled?: boolean;
+    loading?: boolean;
+    onClick?: (event: MouseEvent) => void | Promise<void>;
+  };
+
+  export type ModalButtonsType = {
+    primary?: ModalButtonProps;
+    secondary?: ModalButtonProps;
+    tertiary?: ModalButtonProps;
+  };
+
+  export type ModalClassNames = {
+    body?: HTMLAttributes['class'];
+    content?: HTMLAttributes['class'];
+    footer?: HTMLAttributes['class'];
+    header?: HTMLAttributes['class'];
+    title?: HTMLAttributes['class'];
+  };
+
+  export type ModalProps = {
+    ariaLabel?: string;
+    buttonDefs?: ModalButtonsType;
+    class?: HTMLAttributes['class'];
+    classNames?: ModalClassNames;
+    closeable?: boolean;
+    defaultOpen?: boolean;
+    loading?: boolean;
+    modal?: boolean;
+    modelValue?: boolean;
+    open?: boolean;
+    showLoadingIndicator?: boolean;
+    subTitle?: string | number | VNode;
+    title?: string | number | VNode;
+    type?: ModalType;
+  };
+
+  export type ModalContentTextProps = {
+    class?: HTMLAttributes['class'];
   };
 
   export type DataGridColumn<T> = {
@@ -181,7 +331,13 @@ declare module '@hugo-ui/shadcn-vue' {
   export const Button: DefineComponent<ButtonProps>;
   export const Card: DefineComponent<CardProps>;
   export const DataGrid: DefineComponent<Record<string, unknown>>;
+  export const DropdownMenu: DefineComponent<DropdownMenuProps>;
+  export const DropdownMenuItem: DefineComponent<DropdownMenuItemProps>;
+  export const DropdownMenuSeparator: DefineComponent<DropdownMenuSeparatorProps>;
   export const Input: DefineComponent<InputProps>;
+  export const Modal: DefineComponent<ModalProps>;
+  export const ModalContentText: DefineComponent<ModalContentTextProps>;
+  export const Select: DefineComponent<SelectProps>;
   export const PageTemplate: DefineComponent<PageTemplateProps>;
   export const ContentTemplate: DefineComponent<ContentTemplateProps>;
 }

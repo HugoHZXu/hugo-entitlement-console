@@ -114,14 +114,14 @@ describe('entitlement service API', () => {
     vi.unstubAllGlobals();
   });
 
-  it('loads products through the entitlement GraphQL endpoint with the demo organization', async () => {
+  it('loads products through the entitlement GraphQL endpoint with selected organization scope', async () => {
     const fetchMock = mockJsonFetch({
       data: {
         products: [product],
       },
     });
 
-    await expect(listProducts()).resolves.toEqual([product]);
+    await expect(listProducts({ organizationId: 'org-tenant-001' })).resolves.toEqual([product]);
 
     expect(fetchMock).toHaveBeenCalledWith(
       'http://127.0.0.1:4317/graphql',
@@ -131,9 +131,43 @@ describe('entitlement service API', () => {
     );
     expect(getFetchBody(fetchMock)).toMatchObject({
       variables: {
-        organizationId: 'org-demo-001',
+        organizationId: 'org-tenant-001',
       },
     });
+  });
+
+  it('sends the stored identity token with entitlement GraphQL requests when available', async () => {
+    vi.stubGlobal('window', {
+      localStorage: {
+        getItem: (key: string) => {
+          if (key === 'entitlementConsole.identityAccessToken') {
+            return 'identity-token';
+          }
+
+          if (key === 'entitlementConsole.identityAccessTokenExpiresAt') {
+            return '2099-01-01T00:00:00.000Z';
+          }
+
+          return null;
+        },
+      },
+    });
+    const fetchMock = mockJsonFetch({
+      data: {
+        products: [product],
+      },
+    });
+
+    await listProducts({ organizationId: 'org-tenant-001' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:4317/graphql',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer identity-token',
+        }),
+      })
+    );
   });
 
   it('sends Activity Log pagination, sorting, search, and organization through GraphQL', async () => {
@@ -145,6 +179,7 @@ describe('entitlement service API', () => {
 
     await expect(
       listActivityLogs({
+        organizationId: 'org-tenant-001',
         pageNumber: 2,
         pageSize: 100,
         productId: 'prod-insight-studio',
@@ -157,7 +192,7 @@ describe('entitlement service API', () => {
     expect(getFetchBody(fetchMock)).toMatchObject({
       variables: {
         input: {
-          organizationId: 'org-demo-001',
+          organizationId: 'org-tenant-001',
           pageNumber: 2,
           pageSize: 100,
           productId: 'prod-insight-studio',
@@ -174,13 +209,14 @@ describe('entitlement service API', () => {
 
     await expect(
       updateProductUserAllocations({
+        organizationId: 'org-tenant-001',
         productId: 'prod-insight-studio',
         selectedUserIds: ['user-amelia-hart', 'user-amelia-hart', 'user-noah-kim'],
       })
     ).resolves.toEqual(userAccessRows);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://127.0.0.1:4317/organizations/org-demo-001/products/prod-insight-studio/allocations',
+      'http://127.0.0.1:4317/organizations/org-tenant-001/products/prod-insight-studio/allocations',
       expect.objectContaining({
         method: 'PUT',
       })
@@ -201,6 +237,7 @@ describe('entitlement service API', () => {
 
     await expect(
       updateProductUserAllocations({
+        organizationId: 'org-tenant-001',
         productId: 'prod-insight-studio',
         selectedUserIds: ['user-amelia-hart'],
       })
@@ -217,6 +254,8 @@ describe('entitlement service API', () => {
       ],
     });
 
-    await expect(listProducts()).rejects.toThrow('Product prod-missing was not found.');
+    await expect(listProducts({ organizationId: 'org-tenant-001' })).rejects.toThrow(
+      'Product prod-missing was not found.'
+    );
   });
 });

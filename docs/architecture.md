@@ -6,14 +6,14 @@ This document describes the current architecture of the Hugo Entitlement Console
 
 The app owns its own routing, page composition, entitlement service API facade, and product-local view models. It is conceptually related to the broader Hugo SaaS management console portfolio, but it is intentionally kept as an independent Vue and Tailwind CSS application instead of being wired into a micro frontend workspace.
 
-It connects to a local desensitized entitlement service for portfolio development. All product, entitlement, allocated user, and activity data remains synthetic.
+It connects to local desensitized identity and entitlement services for portfolio development. All accounts, product, entitlement, allocated user, and activity data remains synthetic.
 
 ## Runtime Stack
 
 - Vue 3 and TypeScript provide the application and component model.
 - Vite provides local development and production build tooling.
 - Vue Router owns route-level navigation.
-- Pinia stores app-wide UI state such as current account/admin context and Activity Log filters.
+- Pinia stores app-wide identity session state, entitlement organization scope, and Activity Log filters.
 - TanStack Vue Query owns async service state and cache invalidation.
 - TanStack Table is consumed through the external DataGrid component API.
 - `@hugo-ui/shadcn-vue` provides shared UI primitives and layout components.
@@ -55,12 +55,14 @@ Pages compose feature modules but avoid calling backend transport directly. Feat
 
 The app follows a service facade pattern:
 
-1. Route params identify the active product or view.
-2. Page components call feature composables such as `useProductQuery`, `useProductUserAccessQuery`, or `useActivityLogsQuery`.
-3. Feature composables call `src/shared/api/entitlement-api.ts`.
-4. The shared API facade calls the local entitlement service through GraphQL read models and REST command endpoints.
-5. TanStack Vue Query caches the returned data by keys from `src/shared/config/query-keys.ts`.
-6. Mutations invalidate affected query keys so the detail, entitlement summary, allocated users, and related table views stay consistent.
+1. The app loads the selected demo account from `identity-service`.
+2. The identity session selects an active entitlement organization from `entitlementOrganizations`.
+3. Route params identify the active product or view.
+4. Page components call feature composables such as `useProductQuery`, `useProductUserAccessQuery`, or `useActivityLogsQuery`.
+5. Feature composables call `src/shared/api/entitlement-api.ts` with the selected entitlement organization id.
+6. The shared API facade sends the current identity token when available and calls the local entitlement service through GraphQL read models and REST command endpoints.
+7. TanStack Vue Query caches the returned data by account and organization scoped keys from `src/shared/config/query-keys.ts`.
+8. Mutations invalidate affected query keys so the detail, entitlement summary, allocated users, and related table views stay consistent.
 
 The allocated-user workflow keeps draft selection state in the page while persisted allocation state lives in the local entitlement service.
 
@@ -103,11 +105,15 @@ TanStack Vue Query owns server-like async state:
 - assignable user access rows
 - activity logs
 
+Identity-driven query keys include the selected account and entitlement organization scope. Switching account or organization clears stale entitlement data and reloads product, allocation, and Activity Log views under the new scope.
+
 The global Activity Log page uses explicit backend pagination with page size options of 25, 50, and 100 rows. The product detail Activity Log slice uses backend pagination with infinite loading and virtualized rows. The allocated-user page loads the full product access row set and keeps virtualized rendering without frontend or backend pagination.
 
 Pinia owns app and UI state:
 
-- current synthetic account/admin context
+- identity-service demo accounts and selected account
+- selected entitlement organization scope from `entitlementOrganizations`
+- current identity token and expiry for local demo requests
 - Activity Log search and sort filters
 
 Route-level draft UI state stays local to the page when it is not shared across routes.

@@ -3,6 +3,84 @@ const enMessages = {
     languageToggleLabel: 'Switch language',
     title: 'Hugo Entitlement Console',
   },
+  accessState: {
+    actions: {
+      retry: 'Retry',
+    },
+    error: {
+      message:
+        'The demo identity context is unavailable. Confirm identity-service is running or retry the request.',
+      pageTitle: 'Account unavailable',
+      title: 'Unable to load account context',
+    },
+    loading: {
+      message: 'Loading the selected demo account and entitlement organization scope.',
+      pageTitle: 'Loading account',
+      title: 'Checking entitlement access',
+    },
+    noAccounts: {
+      message: 'identity-service did not return any switchable demo accounts.',
+      pageTitle: 'No demo accounts',
+      title: 'No demo accounts available',
+    },
+    noEntitlementScope: {
+      message:
+        'The selected demo account does not include an entitlement organization scope. Switch accounts to preview entitlement data.',
+      pageTitle: 'No entitlement access',
+      title: 'No entitlement organization available',
+    },
+    organizationUnavailable: {
+      message:
+        'The selected entitlement organization is not active. Choose another organization scope when one is available.',
+      pageTitle: 'Organization unavailable',
+      title: 'Selected organization is unavailable',
+    },
+    renewing: {
+      message: 'Renewing the demo identity token before loading entitlement data.',
+      pageTitle: 'Renewing session',
+      title: 'Refreshing account context',
+    },
+  },
+  identity: {
+    account: {
+      contextUnavailable: 'Account context unavailable.',
+      current: 'Current',
+      fallbackNotice: 'Selected account was unavailable. The default demo account is now active.',
+      fallbackName: 'Demo account',
+      listLabel: 'Demo accounts',
+      loading: 'Loading account',
+      multipleEntitlementAccess: '{count} entitlement organizations',
+      noAccounts: 'No demo accounts are available from identity-service.',
+      noEntitlementAccess: 'No entitlement organization access',
+      openMenu: 'Open account menu',
+      retry: 'Retry account context',
+      retryMeta: 'Reload identity-service session',
+      singleEntitlementAccess: 'Entitlement scope: {organization}',
+      switchAccount: 'Switch account',
+      switchAccountMeta: 'Choose a synthetic demo account',
+      switchModalTitle: 'Switch demo account',
+      unavailable: 'Account unavailable',
+    },
+    organization: {
+      current: 'Current organization',
+      fallbackName: 'Current organization',
+      kind: {
+        internal: 'Internal',
+        public: 'Public',
+        tenant: 'Tenant',
+      },
+      menuMeta: 'Applies to products, allocated users, and Activity Log.',
+      menuTitle: 'Entitlement organization',
+      noScope: 'No entitlement organization is available for this account.',
+      placeholder: 'Select organization',
+      scopeLabel: 'Entitlement organization',
+      status: {
+        active: 'Active',
+        archived: 'Archived',
+        inactive: 'Inactive',
+      },
+    },
+  },
   nav: {
     activityLog: 'Activity Log',
     products: 'Products',
@@ -85,6 +163,9 @@ const enMessages = {
       },
     },
     products: {
+      empty: 'No products are currently granted to {organization}.',
+      emptyDescription: 'No products are currently granted to {organization}.',
+      emptyTitle: 'No product data',
       loading: 'Loading products...',
       title: 'Products',
       titleInfo:

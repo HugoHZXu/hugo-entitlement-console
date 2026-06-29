@@ -7,24 +7,47 @@ import {
   listEntitlementsByProduct,
 } from '@/shared/api';
 import { queryKeys } from '@/shared/config/query-keys';
+import { useIdentitySessionStore } from '@/shared/stores/identity-session-store';
 
 export function useEntitlementsQuery() {
+  const identityStore = useIdentitySessionStore();
+
   return useQuery({
-    queryKey: queryKeys.entitlements,
-    queryFn: listEntitlements,
+    enabled: computed(() => identityStore.hasUsableEntitlementScope),
+    queryKey: computed(() => queryKeys.entitlements(identityStore.entitlementScopeKey)),
+    queryFn: () =>
+      listEntitlements({
+        organizationId: identityStore.selectedEntitlementOrganizationId,
+      }),
   });
 }
 
 export function useProductEntitlementsQuery(productId: MaybeRefOrGetter<string>) {
+  const identityStore = useIdentitySessionStore();
+
   return useQuery({
-    queryKey: computed(() => queryKeys.productEntitlements(toValue(productId))),
-    queryFn: () => listEntitlementsByProduct(toValue(productId)),
+    enabled: computed(() => identityStore.hasUsableEntitlementScope && Boolean(toValue(productId))),
+    queryKey: computed(() =>
+      queryKeys.productEntitlements(identityStore.entitlementScopeKey, toValue(productId))
+    ),
+    queryFn: () =>
+      listEntitlementsByProduct(toValue(productId), {
+        organizationId: identityStore.selectedEntitlementOrganizationId,
+      }),
   });
 }
 
 export function useProductEntitlementSummaryQuery(productId: MaybeRefOrGetter<string>) {
+  const identityStore = useIdentitySessionStore();
+
   return useQuery({
-    queryKey: computed(() => queryKeys.productEntitlementSummary(toValue(productId))),
-    queryFn: () => getProductEntitlementSummary(toValue(productId)),
+    enabled: computed(() => identityStore.hasUsableEntitlementScope && Boolean(toValue(productId))),
+    queryKey: computed(() =>
+      queryKeys.productEntitlementSummary(identityStore.entitlementScopeKey, toValue(productId))
+    ),
+    queryFn: () =>
+      getProductEntitlementSummary(toValue(productId), {
+        organizationId: identityStore.selectedEntitlementOrganizationId,
+      }),
   });
 }

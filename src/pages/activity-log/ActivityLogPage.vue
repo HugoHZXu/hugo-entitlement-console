@@ -23,12 +23,15 @@ import {
   ACTIVITY_LOG_PAGE_SIZE_OPTIONS,
   useActivityLogFilterStore,
 } from '@/features/activity-log/stores/activity-log-filter-store';
+import EntitlementAccessState from '@/features/identity/EntitlementAccessState.vue';
+import { useEntitlementPageAccessState } from '@/features/identity/useEntitlementAccessState';
 import type { ActivityLogEntry } from '@/shared/types';
 
 const activityLogFilterStore = useActivityLogFilterStore();
 const { pageNumber, pageSize, queryInput, sort } = storeToRefs(activityLogFilterStore);
 const columns = useActivityLogColumns();
 const { t } = useI18n();
+const accessStateKind = useEntitlementPageAccessState();
 
 const search = computed({
   get: () => activityLogFilterStore.searchString,
@@ -64,7 +67,9 @@ function handlePageSizeChange(nextPageSize: number) {
 </script>
 
 <template>
+  <EntitlementAccessState v-if="accessStateKind" :kind="accessStateKind" />
   <ContentTemplate
+    v-else
     type="table"
     :page-title="t('pages.activityLog.title')"
     :title-info="t('pages.activityLog.titleInfo')"

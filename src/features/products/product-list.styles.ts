@@ -25,3 +25,17 @@ export const productCardDescriptionClass = 'm-0 text-hugo-text-default';
 export const productCardStatusClass = 'self-end';
 
 export const pageMutedClass = 'm-0 text-hugo-text-default';
+
+export const productEmptyStateClass =
+  'grid min-h-72 place-items-center rounded-lg border border-dashed border-hugo-border-default bg-hugo-surface-default px-6 py-10 text-center';
+
+export const productEmptyContentClass = 'grid max-w-md justify-items-center gap-3';
+
+export const productEmptyIconClass =
+  'grid size-12 place-items-center rounded-full bg-hugo-surface-tinted text-hugo-brand-accent [&_svg]:size-6';
+
+export const productEmptyTitleClass =
+  'm-0 text-lg font-semibold leading-6 text-hugo-text-primary';
+
+export const productEmptyDescriptionClass =
+  'm-0 text-sm leading-6 text-hugo-text-default';

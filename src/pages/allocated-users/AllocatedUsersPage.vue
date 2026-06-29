@@ -33,6 +33,8 @@ import {
   useProductEntitlementsQuery,
   useProductEntitlementSummaryQuery,
 } from '@/features/entitlements/composables/useEntitlementsQuery';
+import EntitlementAccessState from '@/features/identity/EntitlementAccessState.vue';
+import { useEntitlementPageAccessState } from '@/features/identity/useEntitlementAccessState';
 import type { UserAccessRow } from '@/shared/types';
 
 const props = defineProps<{
@@ -41,6 +43,7 @@ const props = defineProps<{
 
 const { t } = useI18n();
 const router = useRouter();
+const accessStateKind = useEntitlementPageAccessState();
 const productId = computed(() => props.productId);
 const {
   data: userAccessRows,
@@ -161,7 +164,9 @@ async function submitChanges() {
 </script>
 
 <template>
+  <EntitlementAccessState v-if="accessStateKind" :kind="accessStateKind" />
   <ContentTemplate
+    v-else
     type="table"
     :page-title="t('pages.allocatedUsers.title')"
     :title-info="t('pages.allocatedUsers.titleInfo')"

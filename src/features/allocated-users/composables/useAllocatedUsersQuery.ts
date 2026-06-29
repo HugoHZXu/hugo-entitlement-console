@@ -7,54 +7,74 @@ import {
   updateProductUserAllocations,
 } from '@/shared/api';
 import { queryKeys } from '@/shared/config/query-keys';
+import { useIdentitySessionStore } from '@/shared/stores/identity-session-store';
 
 export function useAllocatedUsersQuery(productId: MaybeRefOrGetter<string>) {
+  const identityStore = useIdentitySessionStore();
+
   return useQuery({
-    queryKey: computed(() => queryKeys.allocatedUsers(toValue(productId))),
-    queryFn: () => listAllocatedUsers(toValue(productId)),
+    enabled: computed(() => identityStore.hasUsableEntitlementScope && Boolean(toValue(productId))),
+    queryKey: computed(() =>
+      queryKeys.allocatedUsers(identityStore.entitlementScopeKey, toValue(productId))
+    ),
+    queryFn: () =>
+      listAllocatedUsers(toValue(productId), {
+        organizationId: identityStore.selectedEntitlementOrganizationId,
+      }),
   });
 }
 
 export function useProductUserAccessQuery(productId: MaybeRefOrGetter<string>) {
+  const identityStore = useIdentitySessionStore();
+
   return useQuery({
-    queryKey: computed(() => queryKeys.productUserAccess(toValue(productId))),
-    queryFn: () => listProductUserAccess(toValue(productId)),
+    enabled: computed(() => identityStore.hasUsableEntitlementScope && Boolean(toValue(productId))),
+    queryKey: computed(() =>
+      queryKeys.productUserAccess(identityStore.entitlementScopeKey, toValue(productId))
+    ),
+    queryFn: () =>
+      listProductUserAccess(toValue(productId), {
+        organizationId: identityStore.selectedEntitlementOrganizationId,
+      }),
   });
 }
 
 export function useUpdateProductUserAllocationsMutation(productId: MaybeRefOrGetter<string>) {
   const queryClient = useQueryClient();
+  const identityStore = useIdentitySessionStore();
 
   return useMutation({
     mutationFn: (selectedUserIds: string[]) =>
       updateProductUserAllocations({
+        organizationId: identityStore.selectedEntitlementOrganizationId,
         productId: toValue(productId),
         selectedUserIds,
       }),
     onSuccess: async () => {
       const resolvedProductId = toValue(productId);
+      const scopeKey = identityStore.entitlementScopeKey;
 
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queryKeys.productUserAccess(resolvedProductId),
+          queryKey: queryKeys.productUserAccess(scopeKey, resolvedProductId),
         }),
         queryClient.invalidateQueries({
-          queryKey: queryKeys.allocatedUsers(resolvedProductId),
+          queryKey: queryKeys.allocatedUsers(scopeKey, resolvedProductId),
         }),
         queryClient.invalidateQueries({
-          queryKey: queryKeys.productEntitlementSummary(resolvedProductId),
+          queryKey: queryKeys.productEntitlementSummary(scopeKey, resolvedProductId),
         }),
         queryClient.invalidateQueries({
-          queryKey: queryKeys.productEntitlements(resolvedProductId),
+          queryKey: queryKeys.productEntitlements(scopeKey, resolvedProductId),
         }),
         queryClient.invalidateQueries({
-          queryKey: queryKeys.entitlements,
+          queryKey: queryKeys.entitlements(scopeKey),
         }),
         queryClient.invalidateQueries({
-          queryKey: queryKeys.productActivityLogs(resolvedProductId),
+          queryKey: queryKeys.productActivityLogs(scopeKey, resolvedProductId),
         }),
         queryClient.invalidateQueries({
-          queryKey: queryKeys.activityLogsRoot,
+          queryKey: queryKeys.activityLogsRoot(scopeKey),
         }),
       ]);
     },

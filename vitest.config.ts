@@ -19,7 +19,7 @@ export default defineConfig({
     ],
   },
   test: {
-    environment: 'jsdom',
+    environment: 'node',
     globals: true,
     include: ['src/**/*.test.ts'],
   },

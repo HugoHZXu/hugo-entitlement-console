@@ -7,6 +7,8 @@ import { RouterLink, useRouter } from 'vue-router';
 import { useProductActivityLogColumns } from '@/features/activity-log/activity-display';
 import { useProductActivityLogInfiniteQuery } from '@/features/activity-log/composables/useActivityLogQuery';
 import { useProductEntitlementSummaryQuery } from '@/features/entitlements/composables/useEntitlementsQuery';
+import EntitlementAccessState from '@/features/identity/EntitlementAccessState.vue';
+import { useEntitlementPageAccessState } from '@/features/identity/useEntitlementAccessState';
 import {
   productDetailGridClass,
   productDetailWidePanelClass,
@@ -41,6 +43,7 @@ const props = defineProps<{
 
 const { t } = useI18n();
 const router = useRouter();
+const accessStateKind = useEntitlementPageAccessState();
 const { data: product } = useProductQuery(computed(() => props.productId));
 const { data: entitlementSummary } = useProductEntitlementSummaryQuery(
   computed(() => props.productId)
@@ -84,7 +87,9 @@ function handleActivityLogEndReached() {
 </script>
 
 <template>
+  <EntitlementAccessState v-if="accessStateKind" :kind="accessStateKind" />
   <ContentTemplate
+    v-else
     type="full"
     :page-title="product ? formatProductName(product) : t('pages.productDetail.fallbackTitle')"
     :title-info="

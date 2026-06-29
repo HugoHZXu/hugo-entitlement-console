@@ -1,8 +1,8 @@
 import {
-  getDemoOrganizationId,
   getEntitlementGraphqlUrl,
   getEntitlementRestUrl,
 } from '@/shared/config/entitlement-service';
+import { getCurrentOrRefreshIdentityAccessToken } from '@/shared/stores/identity-session-store';
 import type {
   ActivityLogListInput,
   ActivityLogListResult,
@@ -22,6 +22,10 @@ type GraphqlError = {
 type GraphqlResponse<TData> = {
   data?: TData | null;
   errors?: GraphqlError[];
+};
+
+type EntitlementRequestScope = {
+  organizationId?: string | null;
 };
 
 const PRODUCT_FIELDS = `
@@ -178,6 +182,22 @@ async function readJsonResponse(response: Response): Promise<unknown> {
   }
 }
 
+async function createJsonHeaders(headers?: HeadersInit): Promise<HeadersInit> {
+  const accessToken = await getCurrentOrRefreshIdentityAccessToken();
+  const jsonHeaders: HeadersInit = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    ...headers,
+  };
+
+  return accessToken
+    ? {
+        ...jsonHeaders,
+        Authorization: `Bearer ${accessToken}`,
+      }
+    : jsonHeaders;
+}
+
 async function requestGraphql<TData, TVariables extends Record<string, unknown>>(
   query: string,
   variables: TVariables
@@ -187,10 +207,7 @@ async function requestGraphql<TData, TVariables extends Record<string, unknown>>
       query,
       variables,
     }),
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
+    headers: await createJsonHeaders(),
     method: 'POST',
   });
   const payload = (await readJsonResponse(response)) as GraphqlResponse<TData> | unknown;
@@ -222,11 +239,7 @@ async function requestGraphql<TData, TVariables extends Record<string, unknown>>
 async function requestRest<TData>(path: string, init: RequestInit): Promise<TData> {
   const response = await fetch(new URL(path, getEntitlementRestUrl()).toString(), {
     ...init,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...init.headers,
-    },
+    headers: await createJsonHeaders(init.headers),
   });
   const payload = await readJsonResponse(response);
 
@@ -238,7 +251,11 @@ async function requestRest<TData>(path: string, init: RequestInit): Promise<TDat
 }
 
 function getOrganizationId(organizationId?: string | null): string {
-  return organizationId ?? getDemoOrganizationId();
+  if (!organizationId) {
+    throw new Error('Entitlement organization scope is not selected.');
+  }
+
+  return organizationId;
 }
 
 function createActivityLogInput(input: ActivityLogListInput = {}): ActivityLogListInput {
@@ -274,7 +291,7 @@ function createActivityLogInput(input: ActivityLogListInput = {}): ActivityLogLi
   return queryInput;
 }
 
-export async function listProducts(): Promise<Product[]> {
+export async function listProducts(scope: EntitlementRequestScope = {}): Promise<Product[]> {
   const data = await requestGraphql<{ products: Product[] }, { organizationId: string }>(
     `
       query EntitlementProducts($organizationId: ID!) {
@@ -284,14 +301,17 @@ export async function listProducts(): Promise<Product[]> {
       }
     `,
     {
-      organizationId: getDemoOrganizationId(),
+      organizationId: getOrganizationId(scope.organizationId),
     }
   );
 
   return data.products;
 }
 
-export async function getProduct(productId: string): Promise<Product | undefined> {
+export async function getProduct(
+  productId: string,
+  scope: EntitlementRequestScope = {}
+): Promise<Product | undefined> {
   const data = await requestGraphql<
     { product: Product | null },
     { organizationId: string; productId: string }
@@ -304,7 +324,7 @@ export async function getProduct(productId: string): Promise<Product | undefined
       }
     `,
     {
-      organizationId: getDemoOrganizationId(),
+      organizationId: getOrganizationId(scope.organizationId),
       productId,
     }
   );
@@ -312,16 +332,19 @@ export async function getProduct(productId: string): Promise<Product | undefined
   return data.product ?? undefined;
 }
 
-export async function listEntitlements(): Promise<Entitlement[]> {
-  const products = await listProducts();
+export async function listEntitlements(scope: EntitlementRequestScope = {}): Promise<Entitlement[]> {
+  const products = await listProducts(scope);
   const entitlements = await Promise.all(
-    products.map((product) => listEntitlementsByProduct(product.id))
+    products.map((product) => listEntitlementsByProduct(product.id, scope))
   );
 
   return entitlements.flat();
 }
 
-export async function listEntitlementsByProduct(productId: string): Promise<Entitlement[]> {
+export async function listEntitlementsByProduct(
+  productId: string,
+  scope: EntitlementRequestScope = {}
+): Promise<Entitlement[]> {
   const data = await requestGraphql<
     { entitlements: Entitlement[] },
     { organizationId: string; productId: string }
@@ -334,7 +357,7 @@ export async function listEntitlementsByProduct(productId: string): Promise<Enti
       }
     `,
     {
-      organizationId: getDemoOrganizationId(),
+      organizationId: getOrganizationId(scope.organizationId),
       productId,
     }
   );
@@ -343,7 +366,8 @@ export async function listEntitlementsByProduct(productId: string): Promise<Enti
 }
 
 export async function getProductEntitlementSummary(
-  productId: string
+  productId: string,
+  scope: EntitlementRequestScope = {}
 ): Promise<ProductEntitlementSummary> {
   const data = await requestGraphql<
     { productEntitlementSummary: ProductEntitlementSummary },
@@ -357,7 +381,7 @@ export async function getProductEntitlementSummary(
       }
     `,
     {
-      organizationId: getDemoOrganizationId(),
+      organizationId: getOrganizationId(scope.organizationId),
       productId,
     }
   );
@@ -365,7 +389,10 @@ export async function getProductEntitlementSummary(
   return data.productEntitlementSummary;
 }
 
-export async function listAllocatedUsers(productId: string): Promise<AllocatedUser[]> {
+export async function listAllocatedUsers(
+  productId: string,
+  scope: EntitlementRequestScope = {}
+): Promise<AllocatedUser[]> {
   const data = await requestGraphql<
     { allocatedUsers: AllocatedUser[] },
     { organizationId: string; productId: string }
@@ -378,7 +405,7 @@ export async function listAllocatedUsers(productId: string): Promise<AllocatedUs
       }
     `,
     {
-      organizationId: getDemoOrganizationId(),
+      organizationId: getOrganizationId(scope.organizationId),
       productId,
     }
   );
@@ -386,7 +413,10 @@ export async function listAllocatedUsers(productId: string): Promise<AllocatedUs
   return data.allocatedUsers;
 }
 
-export async function listProductUserAccess(productId: string): Promise<UserAccessRow[]> {
+export async function listProductUserAccess(
+  productId: string,
+  scope: EntitlementRequestScope = {}
+): Promise<UserAccessRow[]> {
   const data = await requestGraphql<
     { productUserAccess: UserAccessRow[] },
     { organizationId: string; productId: string }
@@ -399,7 +429,7 @@ export async function listProductUserAccess(productId: string): Promise<UserAcce
       }
     `,
     {
-      organizationId: getDemoOrganizationId(),
+      organizationId: getOrganizationId(scope.organizationId),
       productId,
     }
   );
@@ -450,14 +480,23 @@ export async function listActivityLogs(
   return data.activityLogs;
 }
 
-export async function listActivityLog(productId: string): Promise<ActivityLogEntry[]> {
-  const activityLogs = await listActivityLogs({
+export async function listActivityLog(
+  productId: string,
+  scope: EntitlementRequestScope = {}
+): Promise<ActivityLogEntry[]> {
+  const input: ActivityLogListInput = {
     pageNumber: 0,
     pageSize: 50,
     productId,
     sortDirection: 'desc',
     sortField: 'eventTime',
-  });
+  };
+
+  if (scope.organizationId !== undefined) {
+    input.organizationId = scope.organizationId;
+  }
+
+  const activityLogs = await listActivityLogs(input);
 
   return activityLogs.items;
 }
