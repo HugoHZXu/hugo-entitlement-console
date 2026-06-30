@@ -1,97 +1,112 @@
 # Hugo Entitlement Console
 
-This is a portfolio app for B2B product entitlement management.
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-This repository contains a desensitized admin console for product entitlement management. Products are the primary navigation surface; allocated users, available quantity, usage dimensions, and Activity Log views are presented around the product workflow.
+A Vue 3 portfolio project demonstrating a B2B product entitlement management console. Manage product catalogs, seat allocations, and audit activity logs — all built with a modern Vue 3 + TypeScript stack.
 
-The app connects to local desensitized `identity-service` and `entitlement-service` backends for portfolio development. The service data remains synthetic and is scoped by the selected demo account's entitlement organization access.
+## Quick Start
 
-## Feature Highlights
+This app works with a local backend service. To run the full demo:
 
-- Product catalog with status, provider, and entitlement metadata.
-- Demo account switching backed by local `identity-service`.
-- Entitlement organization scope selection from the selected account.
-- Product detail workflow with entitlement summary and seat availability.
-- Allocated user management with search, draft selection, and capacity validation.
-- Activity Log views backed by the local entitlement service.
-- English and Chinese locale support through `vue-i18n`.
+```bash
+# 1. Start the backend (from hugo-saas-backend)
+git clone https://github.com/HugoHZXu/hugo-saas-backend.git
+cd hugo-saas-backend
+pnpm install
+pnpm run db:reset
+pnpm run dev:services
+
+# 2. Start the frontend (from this repo)
+cd ../entitlement-console-portfolio
+pnpm install
+pnpm run dev
+```
+
+The backend services run on these local ports by default:
+
+| Service | URL |
+|---------|-----|
+| Identity Service | `http://127.0.0.1:4320` |
+| Entitlement Service (GraphQL) | `http://127.0.0.1:4317/graphql` |
+| Entitlement Service (REST) | `http://127.0.0.1:4317` |
+
+> **Note:** All data in this demo is synthetic. No real customer information is used.
+
+## Features
+
+- **Product Catalog** — Browse products with status, provider, platform, usage dimensions, and entitlement metadata.
+- **Account Switching** — Switch between demo accounts with different organizations and access scopes.
+- **Product Detail** — View entitlement summaries, seat availability, and product-scoped activity.
+- **Seat Allocation** — Manage named-user assignments with search, draft selection, and capacity validation.
+- **Activity Log** — Audit trail with pagination, search, sorting, and localized messages.
+- **i18n** — Full English and Chinese UI via `vue-i18n`.
 
 ## Screenshots
 
 ### Products
 
+The main product catalog showing available products with status and metadata.
+
 ![Products page](docs/images/products.png)
 
 ### Product Detail
+
+Entitlement summary, seat usage, and recent activity for a selected product.
 
 ![Product detail page](docs/images/product-detail.png)
 
 ### Allocated Users
 
+Seat management with search, multi-select, and capacity checking before saving changes.
+
 ![Allocated users page](docs/images/allocated-users.png)
 
 ### Activity Log
 
+Global audit log with filtering, sorting, and pagination across all products.
+
 ![Activity Log page](docs/images/activity-log.png)
-
-## Related Portfolio Projects
-
-This project belongs to the same Hugo SaaS management console portfolio system as [HugoHZXu/hugo-saas-console](https://github.com/HugoHZXu/hugo-saas-console).
-
-Conceptually, Hugo Entitlement Console represents another product surface in the same B2B SaaS administration domain. If it were built with the same frontend stack and integration conventions as Hugo SaaS Console, it could fit into that portfolio as a workspace-level module within the shared data model and micro frontend architecture.
-
-This repository is intentionally kept as a standalone Vue 3 and Tailwind CSS application so I can practice building a focused product experience with a different frontend stack while preserving the same desensitized SaaS domain model.
 
 ## Tech Stack
 
-- Vue 3 and TypeScript
-- Vite
-- Vue Router
-- Pinia
-- TanStack Vue Query
-- TanStack Table
-- Tailwind CSS v4
-- `@hugo-ui/shadcn-vue`
-- `vue-i18n`
-- Vitest
-- Playwright
-- ESLint and Prettier
-- pnpm
+- **Framework:** Vue 3 + TypeScript, Vite
+- **Routing:** Vue Router
+- **State Management:** Pinia (client state), TanStack Vue Query (server state)
+- **Tables:** TanStack Table (via DataGrid component)
+- **Styling:** Tailwind CSS v4, `@hugo-ui/shadcn-vue` component library
+- **i18n:** vue-i18n
+- **Testing:** Vitest (unit), Playwright (E2E)
+- **Tooling:** ESLint, Prettier, pnpm
+
+## Related Projects
+
+- [hugo-saas-backend](https://github.com/HugoHZXu/hugo-saas-backend) — Companion local backend providing identity and entitlement services.
+- [hugo-ui](https://github.com/HugoHZXu/hugo-ui) — External design system (`@hugo-ui/shadcn-vue`).
+- [hugo-saas-console](https://github.com/HugoHZXu/hugo-saas-console) — Related SaaS admin console frontend.
 
 ## Development
 
-This project expects Node.js `>=22.12.0` and pnpm `>=10.34.1 <11`.
+**Requirements:** Node.js `>=22.12.0`, pnpm `>=10.34.1`
 
 ```bash
 pnpm install
 pnpm run dev
 ```
 
-Local entitlement service defaults:
+Useful commands:
 
 ```bash
-VITE_IDENTITY_SERVICE_URL=http://127.0.0.1:4320
-VITE_ENTITLEMENT_GRAPHQL_URL=http://127.0.0.1:4317/graphql
-VITE_ENTITLEMENT_REST_URL=http://127.0.0.1:4317
+pnpm run typecheck    # Type checking
+pnpm run lint         # ESLint
+pnpm run test         # Unit tests (Vitest)
+pnpm run test:e2e     # E2E tests (Playwright)
+pnpm run build        # Production build
+pnpm run verify       # Full verification (typecheck + lint + test + build)
 ```
 
-Common validation commands:
+### Local Design System Link
 
-```bash
-pnpm run typecheck
-pnpm run lint
-pnpm run test
-pnpm run build
-pnpm run verify
-```
-
-## Design System
-
-The UI is built with [`@hugo-ui/shadcn-vue`](https://github.com/HugoHZXu/hugo-ui), which comes from the external [HugoHZXu/hugo-ui](https://github.com/HugoHZXu/hugo-ui) design system repository.
-
-This repository consumes Hugo UI as an application dependency. It does not own the design system source code, component library publishing flow, Storybook setup, or package release process.
-
-For local development, the app can optionally link to a local clone of `hugo-ui` through the ignored local symlink workflow:
+To develop against a local clone of `hugo-ui`:
 
 ```bash
 pnpm run setup:local-hugo-ui
@@ -100,24 +115,21 @@ pnpm run verify:hugo-ui
 
 ## Project Structure
 
-- `src/app`: Vue application entry, providers, global styles, and i18n setup.
-- `src/routes`: Vue Router configuration.
-- `src/layouts`: application shell layout.
-- `src/pages`: route-level product, allocated user, and Activity Log pages.
-- `src/features`: feature-local UI composition, display helpers, composables, stores, and styles.
-- `src/shared/api`: identity service client plus entitlement service GraphQL and REST API facade.
-- `src/shared/mocks`: synthetic product, entitlement, allocated user, and Activity Log data.
-- `src/shared/types`: shared business view models.
+```
+src/
+  app/          App entry, providers, global styles, i18n
+  routes/       Vue Router configuration
+  layouts/      App shell layout
+  pages/        Page components
+  features/     Feature modules (composables, components, stores, styles)
+  shared/       Shared API, config, stores, types, and utilities
+```
 
-## Portfolio Safety
+For architectural details, see [docs/architecture.md](docs/architecture.md).
 
-This is a desensitized portfolio project. It preserves reusable SaaS administration patterns without including private implementation details.
+## Documentation
 
-- All product, entitlement, user, and audit data is synthetic.
-- The app does not include real customer records, production endpoints, checked-in access tokens, production logs, or private screenshots.
-- Local service endpoints point to `127.0.0.1` and are intended for portfolio development only.
-- Entitlement records exist as product-detail data; they are not modeled as an independent product area in this app.
-- Hugo UI is an external design system dependency, not a component library owned by this repository.
+- [Architecture Overview](docs/architecture.md) (EN) | [架构说明](docs/architecture.zh-CN.md) (中文)
 
 ## License
 

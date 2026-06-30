@@ -3,7 +3,7 @@
 ## Repo Role
 
 - This repository is a standalone Vue 3 portfolio app for a desensitized B2B entitlement management console.
-- It is conceptually a peer of the Organization and User management products in `admin-dashboard`, but is intentionally split out to practice Vue instead of joining the micro frontend system.
+- It is a standalone peer of the Organization and User management products in `admin-dashboard`, running as a Vue application outside the micro frontend system.
 - The app owns Vue routing, page composition, mock API contracts, synthetic data, and product-local Activity Log view models.
 - The design system is maintained in the separate `HugoHZXu/hugo-ui` repository. This repository consumes `@hugo-ui/shadcn-vue`; it does not own Hugo UI component source, Storybook, package publishing, or changesets.
 
